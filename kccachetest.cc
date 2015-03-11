@@ -568,12 +568,12 @@ static int32_t procorder(int64_t rnum, int32_t thnum, bool rnd, bool etc, bool t
   };
   ThreadSet threadsets[THREADMAX];
   if (thnum < 2) {
-    threadsets[0].setparams(0, &db, rnum, thnum, rnd, tran);
+    threadsets[0].setparams(0, &db, rnum / thnum, thnum, rnd, tran);
     threadsets[0].run();
     if (threadsets[0].error()) err = true;
   } else {
     for (int32_t i = 0; i < thnum; i++) {
-      threadsets[i].setparams(i, &db, rnum, thnum, rnd, tran);
+      threadsets[i].setparams(i, &db, rnum / thnum, thnum, rnd, tran);
       threadsets[i].start();
     }
     for (int32_t i = 0; i < thnum; i++) {
@@ -639,12 +639,12 @@ static int32_t procorder(int64_t rnum, int32_t thnum, bool rnd, bool etc, bool t
     };
     ThreadAdd threadadds[THREADMAX];
     if (thnum < 2) {
-      threadadds[0].setparams(0, &db, rnum, thnum, rnd, tran);
+      threadadds[0].setparams(0, &db, rnum / thnum, thnum, rnd, tran);
       threadadds[0].run();
       if (threadadds[0].error()) err = true;
     } else {
       for (int32_t i = 0; i < thnum; i++) {
-        threadadds[i].setparams(i, &db, rnum, thnum, rnd, tran);
+        threadadds[i].setparams(i, &db, rnum / thnum, thnum, rnd, tran);
         threadadds[i].start();
       }
       for (int32_t i = 0; i < thnum; i++) {
@@ -710,12 +710,12 @@ static int32_t procorder(int64_t rnum, int32_t thnum, bool rnd, bool etc, bool t
     };
     ThreadAppend threadappends[THREADMAX];
     if (thnum < 2) {
-      threadappends[0].setparams(0, &db, rnum, thnum, rnd, tran);
+      threadappends[0].setparams(0, &db, rnum / thnum, thnum, rnd, tran);
       threadappends[0].run();
       if (threadappends[0].error()) err = true;
     } else {
       for (int32_t i = 0; i < thnum; i++) {
-        threadappends[i].setparams(i, &db, rnum, thnum, rnd, tran);
+        threadappends[i].setparams(i, &db, rnum / thnum, thnum, rnd, tran);
         threadappends[i].start();
       }
       for (int32_t i = 0; i < thnum; i++) {
@@ -900,12 +900,12 @@ static int32_t procorder(int64_t rnum, int32_t thnum, bool rnd, bool etc, bool t
   };
   ThreadGet threadgets[THREADMAX];
   if (thnum < 2) {
-    threadgets[0].setparams(0, &db, rnum, thnum, rnd, tran);
+    threadgets[0].setparams(0, &db, rnum / thnum, thnum, rnd, tran);
     threadgets[0].run();
     if (threadgets[0].error()) err = true;
   } else {
     for (int32_t i = 0; i < thnum; i++) {
-      threadgets[i].setparams(i, &db, rnum, thnum, rnd, tran);
+      threadgets[i].setparams(i, &db, rnum / thnum, thnum, rnd, tran);
       threadgets[i].start();
     }
     for (int32_t i = 0; i < thnum; i++) {
@@ -977,12 +977,12 @@ static int32_t procorder(int64_t rnum, int32_t thnum, bool rnd, bool etc, bool t
     };
     ThreadGetBuffer threadgetbuffers[THREADMAX];
     if (thnum < 2) {
-      threadgetbuffers[0].setparams(0, &db, rnum, thnum, rnd, tran);
+      threadgetbuffers[0].setparams(0, &db, rnum / thnum, thnum, rnd, tran);
       threadgetbuffers[0].run();
       if (threadgetbuffers[0].error()) err = true;
     } else {
       for (int32_t i = 0; i < thnum; i++) {
-        threadgetbuffers[i].setparams(i, &db, rnum, thnum, rnd, tran);
+        threadgetbuffers[i].setparams(i, &db, rnum / thnum, thnum, rnd, tran);
         threadgetbuffers[i].start();
       }
       for (int32_t i = 0; i < thnum; i++) {
@@ -1370,12 +1370,12 @@ static int32_t procorder(int64_t rnum, int32_t thnum, bool rnd, bool etc, bool t
   };
   ThreadRemove threadremoves[THREADMAX];
   if (thnum < 2) {
-    threadremoves[0].setparams(0, &db, rnum, thnum, rnd, etc, tran);
+    threadremoves[0].setparams(0, &db, rnum / thnum, thnum, rnd, etc, tran);
     threadremoves[0].run();
     if (threadremoves[0].error()) err = true;
   } else {
     for (int32_t i = 0; i < thnum; i++) {
-      threadremoves[i].setparams(i, &db, rnum, thnum, rnd, etc, tran);
+      threadremoves[i].setparams(i, &db, rnum / thnum, thnum, rnd, etc, tran);
       threadremoves[i].start();
     }
     for (int32_t i = 0; i < thnum; i++) {
@@ -1544,12 +1544,12 @@ static int32_t procqueue(int64_t rnum, int32_t thnum, int32_t itnum, bool rnd,
     int64_t width = rnum / 10;
     ThreadQueue threads[THREADMAX];
     if (thnum < 2) {
-      threads[0].setparams(0, &db, rnum, thnum, rnd, width);
+      threads[0].setparams(0, &db, rnum / thnum, thnum, rnd, width);
       threads[0].run();
       if (threads[0].error()) err = true;
     } else {
       for (int32_t i = 0; i < thnum; i++) {
-        threads[i].setparams(i, &db, rnum, thnum, rnd, width);
+        threads[i].setparams(i, &db, rnum / thnum, thnum, rnd, width);
         threads[i].start();
       }
       for (int32_t i = 0; i < thnum; i++) {
@@ -1639,7 +1639,7 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
         kc::DB::Cursor* cur = db_->cursor();
         int64_t range = rnum_ * thnum_ / 2;
         for (int64_t i = 1; !err_ && i <= rnum_; i++) {
-          bool tran = myrand(100) == 0;
+		  bool tran = false; // myrand(100) == 0; // TODO: disable transactions for now (SPAA 2014 ALE paper experience)
           if (tran) {
             if (myrand(2) == 0) {
               if (!db_->begin_transaction(myrand(rnum_) == 0)) {
@@ -1678,7 +1678,7 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
             vsiz = myrand(RECBUFSIZL) / (myrand(5) + 1);
           }
           do {
-            switch (myrand(9)) {
+            switch (myrand(99/*9*/)) { // TODO: make 90% read-only operations
               case 0: {
                 if (!db_->set(kbuf, ksiz, vbuf, vsiz)) {
                   dberrprint(db_, __LINE__, "DB::set");
@@ -1916,12 +1916,12 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
     std::memset(lbuf, '*', sizeof(lbuf));
     ThreadWicked threads[THREADMAX];
     if (thnum < 2) {
-      threads[0].setparams(0, &db, rnum, thnum, lbuf);
+      threads[0].setparams(0, &db, rnum / thnum, thnum, lbuf);
       threads[0].run();
       if (threads[0].error()) err = true;
     } else {
       for (int32_t i = 0; i < thnum; i++) {
-        threads[i].setparams(i, &db, rnum, thnum, lbuf);
+        threads[i].setparams(i, &db, rnum / thnum, thnum, lbuf);
         threads[i].start();
       }
       for (int32_t i = 0; i < thnum; i++) {
@@ -2156,12 +2156,13 @@ static int32_t proctran(int64_t rnum, int32_t thnum, int32_t itnum,
     std::memset(lbuf, '*', sizeof(lbuf));
     ThreadTran threads[THREADMAX];
     if (thnum < 2) {
-      threads[0].setparams(0, &db, &paradb, rnum, thnum, lbuf);
+      threads[0].setparams(0, &db, &paradb, rnum / thnum, thnum, lbuf);
       threads[0].run();
       if (threads[0].error()) err = true;
     } else {
       for (int32_t i = 0; i < thnum; i++) {
-        threads[i].setparams(i, &db, &paradb, rnum, thnum, lbuf);
+		printf("th[%d] ops=%d\n", i, rnum / thnum);
+		threads[i].setparams(i, &db, &paradb, rnum / thnum, thnum, lbuf);
         threads[i].start();
       }
       for (int32_t i = 0; i < thnum; i++) {
