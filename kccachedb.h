@@ -106,7 +106,10 @@ class CacheDB : public BasicDB {
      * be performed in this function.
      */
     bool accept(Visitor* visitor, bool writable = true, bool step = false) {
-      _assert_(visitor);
+      __transaction_atomic {
+        _assert_(visitor);
+      }
+
       ScopedRWLock lock(&db_->mlock_, true);
       if (db_->omode_ == 0) {
         db_->set_error(_KCCODELINE_, Error::INVALID, "not opened");
