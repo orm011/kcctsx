@@ -1618,7 +1618,7 @@ class CacheDB : public BasicDB {
    * @param comp the data compressor.
    * @param rtt whether to move the record to the last.
    */
-  void accept_impl(Slot* slot, uint64_t hash, const char* kbuf, size_t ksiz, Visitor* visitor,
+  void __attribute__((transaction_safe)) accept_impl(Slot* slot, uint64_t hash, const char* kbuf, size_t ksiz, Visitor* visitor,
                    Compressor* comp, bool rtt) {
     _assert_(slot && kbuf && ksiz <= MEMMAXSIZ && visitor);
     size_t bidx = hash % slot->bnum;
@@ -1647,14 +1647,15 @@ class CacheDB : public BasicDB {
           const char* rvbuf = dbuf + rksiz;
           size_t rvsiz = rec->vsiz;
           char* zbuf = NULL;
-          size_t zsiz = 0;
-          if (comp) {
-            zbuf = comp->decompress(rvbuf, rvsiz, &zsiz);
-            if (zbuf) {
-              rvbuf = zbuf;
-              rvsiz = zsiz;
-            }
-          }
+          assert(!comp);
+//          size_t zsiz = 0;
+//          if (comp) {
+//            zbuf = comp->decompress(rvbuf, rvsiz, &zsiz);
+//            if (zbuf) {
+//              rvbuf = zbuf;
+//              rvsiz = zsiz;
+//            }
+//          }
           size_t vsiz;
           const char* vbuf = visitor->visit_full(dbuf, rksiz, rvbuf, rvsiz, &vsiz);
           delete[] zbuf;
@@ -1699,14 +1700,15 @@ class CacheDB : public BasicDB {
             bool adj = false;
             if (vbuf != Visitor::NOP) {
               char* zbuf = NULL;
-              size_t zsiz = 0;
-              if (comp) {
-                zbuf = comp->compress(vbuf, vsiz, &zsiz);
-                if (zbuf) {
-                  vbuf = zbuf;
-                  vsiz = zsiz;
-                }
-              }
+              assert(!comp);
+//              size_t zsiz = 0;
+//              if (comp) {
+//                zbuf = comp->compress(vbuf, vsiz, &zsiz);
+//                if (zbuf) {
+//                  vbuf = zbuf;
+//                  vsiz = zsiz;
+//                }
+//              }
               if (tran_) {
                 TranLog log(kbuf, ksiz, dbuf + rksiz, rec->vsiz);
                 slot->trlogs.push_back(log);
@@ -1752,14 +1754,15 @@ class CacheDB : public BasicDB {
     const char* vbuf = visitor->visit_empty(kbuf, ksiz, &vsiz);
     if (vbuf != Visitor::NOP && vbuf != Visitor::REMOVE) {
       char* zbuf = NULL;
-      size_t zsiz = 0;
-      if (comp) {
-        zbuf = comp->compress(vbuf, vsiz, &zsiz);
-        if (zbuf) {
-          vbuf = zbuf;
-          vsiz = zsiz;
-        }
-      }
+      assert(!comp);
+//      size_t zsiz = 0;
+//      if (comp) {
+//        zbuf = comp->compress(vbuf, vsiz, &zsiz);
+//        if (zbuf) {
+//          vbuf = zbuf;
+//          vsiz = zsiz;
+//        }
+//      }
       if (tran_) {
         TranLog log(kbuf, ksiz);
         slot->trlogs.push_back(log);
