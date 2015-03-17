@@ -1644,8 +1644,8 @@ class CacheDB : public BasicDB {
           entp = &rec->right;
           rec = rec->right;
         } else {
-          const char* rvbuf = dbuf + rksiz;
-          size_t rvsiz = rec->vsiz;
+//          const char* rvbuf = dbuf + rksiz;
+//          size_t rvsiz = rec->vsiz;
           char* zbuf = NULL;
           assert(!comp);
 //          size_t zsiz = 0;
@@ -1656,8 +1656,9 @@ class CacheDB : public BasicDB {
 //              rvsiz = zsiz;
 //            }
 //          }
-          size_t vsiz;
-          const char* vbuf = visitor->visit_full(dbuf, rksiz, rvbuf, rvsiz, &vsiz);
+// TODO: fix visitor.
+size_t vsiz;
+const char* vbuf; //= visitor->visit_full(dbuf, rksiz, rvbuf, rvsiz, &vsiz);
           delete[] zbuf;
           if (vbuf == Visitor::REMOVE) {
             if (tran_) {
@@ -1750,8 +1751,9 @@ class CacheDB : public BasicDB {
         }
       }
     }
+// TODO: fix visitor
     size_t vsiz;
-    const char* vbuf = visitor->visit_empty(kbuf, ksiz, &vsiz);
+    const char* vbuf; //= visitor->visit_empty(kbuf, ksiz, &vsiz);
     if (vbuf != Visitor::NOP && vbuf != Visitor::REMOVE) {
       char* zbuf = NULL;
       assert(!comp);
