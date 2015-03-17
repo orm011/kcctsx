@@ -34,7 +34,7 @@
 // transaction safe conflicts with the declaration
 // whereas transaction_pure does not.
 // transaction_pure tells the compiler not to instrument nor worry about it
-// transaction safe, not sure.
+// transaction safe, not sure, but everythin
 extern int  __attribute__((transaction_pure)) memcmp (const void *__s1, const void *__s2, size_t __n)
      __THROW __attribute_pure__ __nonnull ((1, 2));
 
@@ -1673,8 +1673,9 @@ const char* vbuf; //= visitor->visit_full(dbuf, rksiz, rvbuf, rvsiz, &vsiz);
           delete[] zbuf;
           if (vbuf == Visitor::REMOVE) {
             if (tran_) {
-              TranLog log(kbuf, ksiz, dbuf + rksiz, rec->vsiz);
-              slot->trlogs.push_back(log);
+              assert(false);
+//              TranLog log(kbuf, ksiz, dbuf + rksiz, rec->vsiz);
+//              slot->trlogs.push_back(log);
             }
             if (!curs_.empty()) escape_cursors(rec);
             if (rec == slot->first) slot->first = rec->next;
@@ -1722,8 +1723,9 @@ const char* vbuf; //= visitor->visit_full(dbuf, rksiz, rvbuf, rvsiz, &vsiz);
 //                }
 //              }
               if (tran_) {
-                TranLog log(kbuf, ksiz, dbuf + rksiz, rec->vsiz);
-                slot->trlogs.push_back(log);
+                assert(false);
+//                TranLog log(kbuf, ksiz, dbuf + rksiz, rec->vsiz);
+//                slot->trlogs.push_back(log);
               } else {
                 adj = vsiz > rec->vsiz;
               }
@@ -1777,8 +1779,9 @@ const char* vbuf; //= visitor->visit_full(dbuf, rksiz, rvbuf, rvsiz, &vsiz);
 //        }
 //      }
       if (tran_) {
-        TranLog log(kbuf, ksiz);
-        slot->trlogs.push_back(log);
+        assert(0);
+//        TranLog log(kbuf, ksiz);
+//        slot->trlogs.push_back(log);
       }
       slot->size += sizeof(Record) + ksiz + vsiz;
       rec = (Record*)xmalloc(sizeof(*rec) + ksiz + vsiz);
