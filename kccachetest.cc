@@ -2161,7 +2161,7 @@ static int32_t proctran(int64_t rnum, int32_t thnum, int32_t itnum,
       if (threads[0].error()) err = true;
     } else {
       for (int32_t i = 0; i < thnum; i++) {
-		printf("th[%d] ops=%d\n", i, rnum / thnum);
+		printf("th[%d] ops=%ld\n", i, rnum / thnum);
 		threads[i].setparams(i, &db, &paradb, rnum / thnum, thnum, lbuf);
         threads[i].start();
       }
