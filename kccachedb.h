@@ -426,9 +426,9 @@ class CacheDB : public BasicDB {
     int32_t sidx = hash % SLOTNUM;
     hash /= SLOTNUM;
     Slot* slot = slots_ + sidx;
-    slot->lock.lock();
+    //slot->lock.lock();
     accept_impl(slot, hash, kbuf, ksiz, visitor, comp_, rttmode_);
-    slot->lock.unlock();
+    //slot->lock.unlock();
     return true;
     }
   }
