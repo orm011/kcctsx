@@ -27,6 +27,7 @@
 #include <kcdb.h>
 #include <kcplantdb.h>
 
+#include <assert.h>
 namespace kyotocabinet {                 // common namespace
 
 
@@ -411,11 +412,13 @@ class CacheDB : public BasicDB {
     _assert_(kbuf && ksiz <= MEMMAXSIZ && visitor);
     ScopedRWLock lock(&mlock_, false);
     if (omode_ == 0) {
-      set_error(_KCCODELINE_, Error::INVALID, "not opened");
+      assert(0);
+      //set_error(_KCCODELINE_, Error::INVALID, "not opened");
       return false;
     }
     if (writable && !(omode_ & OWRITER)) {
-      set_error(_KCCODELINE_, Error::NOPERM, "permission denied");
+      assert(0);
+      //set_error(_KCCODELINE_, Error::NOPERM, "permission denied");
       return false;
     }
     if (ksiz > KSIZMAX) ksiz = KSIZMAX;
