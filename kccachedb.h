@@ -1733,7 +1733,12 @@ const char* vbuf; //= visitor->visit_full(dbuf, rksiz, rvbuf, rvsiz, &vsiz);
               slot->size += vsiz;
               if (vsiz > rec->vsiz) {
                 Record* old = rec;
-                rec = (Record*)xrealloc(rec, sizeof(*rec) + ksiz + vsiz);
+                //xrealloc is not transaction safe bc realloc is not
+                //so, using the more expensive xmalloc  + memcpy
+                //instead for now.
+                Record* rec = (Record*)xmalloc(sizeof(*rec) + ksiz + vsiz);
+                memcpy(rec, old, sizeof(*rec) + ksiz); //only rec + key.
+                // the value gets copied later.
                 if (rec != old) {
                   if (!curs_.empty()) adjust_cursors(old, rec);
                   if (slot->first == old) slot->first = rec;
