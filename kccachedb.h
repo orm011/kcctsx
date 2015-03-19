@@ -22,7 +22,7 @@
 #include <kcfile.h>
 #include <kccompress.h>
 #include <kccompare.h>
-#include <kcmap.h>
+//#include <kcmap.h>
 #include <kcregex.h>
 #include <kcdb.h>
 #include <kcplantdb.h>
