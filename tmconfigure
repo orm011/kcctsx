@@ -1,2 +1,0 @@
-#! /bin/bash
-./configure --prefix=$PWD/build/ CPPFLAGS='-fgnu-tm' LDFLAGS='-litm'
