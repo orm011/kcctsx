@@ -421,7 +421,7 @@ class CacheDB : public BasicDB {
   bool accept(const char* kbuf, size_t ksiz, Visitor* visitor, bool writable = true) {
     __transaction_atomic {
     _assert_(kbuf && ksiz <= MEMMAXSIZ && visitor);
-    ScopedRWLock lock(&mlock_, false);
+    //ScopedRWLock lock(&mlock_, false);
     if (omode_ == 0) {
       assert(0);
       //set_error(_KCCODELINE_, Error::INVALID, "not opened");
@@ -1990,7 +1990,7 @@ const char* vbuf; //= visitor->visit_full(dbuf, rksiz, rvbuf, rvsiz, &vsiz);
    */
   void escape_cursors(Record* rec) {
     _assert_(rec);
-    ScopedMutex lock(&flock_);
+    //ScopedMutex lock(&flock_);
     if (curs_.empty()) return;
     CursorList::const_iterator cit = curs_.begin();
     CursorList::const_iterator citend = curs_.end();
@@ -2007,7 +2007,7 @@ const char* vbuf; //= visitor->visit_full(dbuf, rksiz, rvbuf, rvsiz, &vsiz);
    */
   void adjust_cursors(Record* orec, Record* nrec) {
     _assert_(orec && nrec);
-    ScopedMutex lock(&flock_);
+    //ScopedMutex lock(&flock_);
     if (curs_.empty()) return;
     CursorList::const_iterator cit = curs_.begin();
     CursorList::const_iterator citend = curs_.end();
