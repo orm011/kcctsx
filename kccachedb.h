@@ -29,16 +29,6 @@
 
 #include <assert.h>
 
-
-//TODO: transaction_pure vs transaction_safe
-// transaction safe conflicts with the declaration
-// whereas transaction_pure does not.
-// transaction_pure tells the compiler not to instrument nor worry about it
-// transaction safe, not sure, but everythin
-extern int  __attribute__((transaction_pure)) memcmp (const void *__s1, const void *__s2, size_t __n)
-     __THROW __attribute_pure__ __nonnull ((1, 2));
-
-
 namespace kyotocabinet {                 // common namespace
 
 
@@ -1987,7 +1977,7 @@ const char* vbuf = visitor->visit_full(dbuf, rksiz, rvbuf, rvsiz, &vsiz);
   int32_t compare_keys(const char* abuf, size_t asiz, const char* bbuf, size_t bsiz) {
     _assert_(abuf && asiz <= MEMMAXSIZ && bbuf && bsiz <= MEMMAXSIZ);
     if (asiz != bsiz) return (int32_t)asiz - (int32_t)bsiz;
-    return memcmp(abuf, bbuf, asiz);
+    return mymemcmp(abuf, bbuf, asiz);
   }
   /**
    * Escape cursors on a shifted or removed records.

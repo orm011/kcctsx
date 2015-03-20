@@ -26,6 +26,18 @@
 
 #define KCDBSSMAGICDATA  "KCSS\n"        ///< The magic data of the snapshot file
 
+inline int __attribute__((transaction_safe)) mymemcmp(const void *s1, const void *s2, size_t n){
+  char * s1ch = (char*)s1;
+  char * s2ch = (char*)s2;
+
+  char diff = 0;
+  for (size_t i = 0; i < n && diff == 0; ++i) {
+    diff = ((int)s1ch[i]) - ((int)s2ch[i]);
+  }
+
+  return diff;
+}
+
 namespace kyotocabinet {                 // common namespace
 
 
@@ -1836,7 +1848,7 @@ class BasicDB : public DB {
      private:
       const char* visit_full(const char* kbuf, size_t ksiz,
                              const char* vbuf, size_t vsiz, size_t* sp) {
-        if (!ovbuf_ || vsiz != ovsiz_ || std::memcmp(vbuf, ovbuf_, vsiz)) return NOP;
+        if (!ovbuf_ || vsiz != ovsiz_ || mymemcmp(vbuf, ovbuf_, vsiz)) return NOP;
         ok_ = true;
         if (!nvbuf_) return REMOVE;
         *sp = nvsiz_;
