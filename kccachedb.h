@@ -1723,10 +1723,10 @@ const char* vbuf = visitor->visit_full(dbuf, rksiz, rvbuf, rvsiz, &vsiz);
               if (vsiz > rec->vsiz) {
                 Record* old = rec;
                 //xrealloc is not transaction safe bc realloc is not
-                //so, using the more expensive xmalloc  + memcpy
+                //so, using the more expensive xmalloc  +mymemcpy
                 //instead for now.
                 Record* rec = (Record*)xmalloc(sizeof(*rec) + ksiz + vsiz);
-                memcpy(rec, old, sizeof(*rec) + ksiz); //only rec + key.
+               mymemcpy(rec, old, sizeof(*rec) + ksiz); //only rec + key.
                 // the value gets copied later.
                 if (rec != old) {
                   if (!curs_.empty()) adjust_cursors(old, rec);
@@ -1738,7 +1738,7 @@ const char* vbuf = visitor->visit_full(dbuf, rksiz, rvbuf, rvsiz, &vsiz);
                   dbuf = (char*)rec + sizeof(*rec);
                 }
               }
-              std::memcpy(dbuf + ksiz, vbuf, vsiz);
+              mymemcpy(dbuf + ksiz, vbuf, vsiz);
               rec->vsiz = vsiz;
               delete[] zbuf;
             }
@@ -1779,9 +1779,9 @@ const char* vbuf = visitor->visit_full(dbuf, rksiz, rvbuf, rvsiz, &vsiz);
       slot->size += sizeof(Record) + ksiz + vsiz;
       rec = (Record*)xmalloc(sizeof(*rec) + ksiz + vsiz);
       char* dbuf = (char*)rec + sizeof(*rec);
-      std::memcpy(dbuf, kbuf, ksiz);
+      mymemcpy(dbuf, kbuf, ksiz);
       rec->ksiz = ksiz | fhash;
-      std::memcpy(dbuf + ksiz, vbuf, vsiz);
+      mymemcpy(dbuf + ksiz, vbuf, vsiz);
       rec->vsiz = vsiz;
       rec->left = NULL;
       rec->right = NULL;
@@ -1936,7 +1936,7 @@ const char* vbuf = visitor->visit_full(dbuf, rksiz, rvbuf, rvsiz, &vsiz);
       char* dbuf = (char*)rec + sizeof(*rec);
       char stack[RECBUFSIZ];
       char* kbuf = rksiz > sizeof(stack) ? new char[rksiz] : stack;
-      std::memcpy(kbuf, dbuf, rksiz);
+      mymemcpy(kbuf, dbuf, rksiz);
       uint64_t hash = hash_record(kbuf, rksiz) / SLOTNUM;
       Remover remover;
       accept_impl(slot, hash, dbuf, rksiz, &remover, NULL, false);

@@ -38,6 +38,18 @@ inline int __attribute__((transaction_safe)) mymemcmp(const void *s1, const void
   return diff;
 }
 
+inline void * __attribute__((transaction_safe)) mymemcpy(void *dest, const void *src, size_t n) {
+  char * destch = (char*)dest;
+  char * srcch = (char*)src;
+
+  for (size_t i = 0; i < n; ++i) {
+    destch[i] = srcch[i];
+  }
+
+  return dest;
+}
+
+
 namespace kyotocabinet {                 // common namespace
 
 
@@ -113,14 +125,14 @@ class DB {
       auto buf2 = std::unique_ptr<char[]>(new char[ksiz + vsiz]);
       auto kbuf2 = buf2.get();
       auto vbuf2 = buf2.get() + ksiz;
-      memcpy(kbuf2, kbuf, ksiz);
-      memcpy(vbuf2, vbuf, vsiz);
+      mymemcpy(kbuf2, kbuf, ksiz);
+      mymemcpy(vbuf2, vbuf, vsiz);
       return pure_visit_full(kbuf2, ksiz, vbuf2, vsiz, sp);
     }
 
     const char*  visit_empty(const char* kbuf, size_t ksiz, size_t* sp) {
       auto kbuf2 = std::unique_ptr<char[]>(new char[ksiz]);
-      memcpy(kbuf2.get(), kbuf, ksiz);
+      mymemcpy(kbuf2.get(), kbuf, ksiz);
       return pure_visit_empty(kbuf2.get(), ksiz, sp);
     }
 
@@ -658,7 +670,7 @@ class BasicDB : public DB {
         const char* visit_full(const char* kbuf, size_t ksiz,
                                const char* vbuf, size_t vsiz, size_t* sp) {
           kbuf_ = new char[ksiz+1];
-          std::memcpy(kbuf_, kbuf, ksiz);
+          mymemcpy(kbuf_, kbuf, ksiz);
           kbuf_[ksiz] = '\0';
           ksiz_ = ksiz;
           return NOP;
@@ -724,7 +736,7 @@ class BasicDB : public DB {
         const char* visit_full(const char* kbuf, size_t ksiz,
                                const char* vbuf, size_t vsiz, size_t* sp) {
           vbuf_ = new char[vsiz+1];
-          std::memcpy(vbuf_, vbuf, vsiz);
+          mymemcpy(vbuf_, vbuf, vsiz);
           vbuf_[vsiz] = '\0';
           vsiz_ = vsiz;
           return NOP;
@@ -796,11 +808,11 @@ class BasicDB : public DB {
                                const char* vbuf, size_t vsiz, size_t* sp) {
           size_t rsiz = ksiz + 1 + vsiz + 1;
           kbuf_ = new char[rsiz];
-          std::memcpy(kbuf_, kbuf, ksiz);
+          mymemcpy(kbuf_, kbuf, ksiz);
           kbuf_[ksiz] = '\0';
           ksiz_ = ksiz;
           vbuf_ = kbuf_ + ksiz + 1;
-          std::memcpy(vbuf_, vbuf, vsiz);
+          mymemcpy(vbuf_, vbuf, vsiz);
           vbuf_[vsiz] = '\0';
           vsiz_ = vsiz;
           return NOP;
@@ -885,11 +897,11 @@ class BasicDB : public DB {
                                const char* vbuf, size_t vsiz, size_t* sp) {
           size_t rsiz = ksiz + 1 + vsiz + 1;
           kbuf_ = new char[rsiz];
-          std::memcpy(kbuf_, kbuf, ksiz);
+          mymemcpy(kbuf_, kbuf, ksiz);
           kbuf_[ksiz] = '\0';
           ksiz_ = ksiz;
           vbuf_ = kbuf_ + ksiz + 1;
-          std::memcpy(vbuf_, vbuf, vsiz);
+          mymemcpy(vbuf_, vbuf, vsiz);
           vbuf_[vsiz] = '\0';
           vsiz_ = vsiz;
           return REMOVE;
@@ -1611,8 +1623,8 @@ class BasicDB : public DB {
                              const char* vbuf, size_t vsiz, size_t* sp) {
         size_t nsiz = vsiz + vsiz_;
         nbuf_ = new char[nsiz];
-        std::memcpy(nbuf_, vbuf, vsiz);
-        std::memcpy(nbuf_ + vsiz, vbuf_, vsiz_);
+        mymemcpy(nbuf_, vbuf, vsiz);
+        mymemcpy(nbuf_ + vsiz, vbuf_, vsiz_);
         *sp = nsiz;
         return nbuf_;
       }
@@ -1667,7 +1679,7 @@ class BasicDB : public DB {
         if (orig_ == INT64MAX) {
           onum = 0;
         } else {
-          std::memcpy(&onum, vbuf, vsiz);
+          mymemcpy(&onum, vbuf, vsiz);
           onum = ntoh64(onum);
           if (num_ == 0) {
             num_ = onum;
@@ -1743,9 +1755,9 @@ class BasicDB : public DB {
           linteg = 0;
           lfract = 0;
         } else {
-          std::memcpy(&linteg, vbuf, sizeof(linteg));
+          mymemcpy(&linteg, vbuf, sizeof(linteg));
           linteg = ntoh64(linteg);
-          std::memcpy(&lfract, vbuf + sizeof(linteg), sizeof(lfract));
+          mymemcpy(&lfract, vbuf + sizeof(linteg), sizeof(lfract));
           lfract = ntoh64(lfract);
         }
         if (lfract == INT64MIN && linteg == INT64MIN) {
@@ -1783,9 +1795,9 @@ class BasicDB : public DB {
           num_ = linteg + (double)lfract / DECUNIT;
         }
         linteg = hton64(linteg);
-        std::memcpy(buf_, &linteg, sizeof(linteg));
+        mymemcpy(buf_, &linteg, sizeof(linteg));
         lfract = hton64(lfract);
-        std::memcpy(buf_ + sizeof(linteg), &lfract, sizeof(lfract));
+        mymemcpy(buf_ + sizeof(linteg), &lfract, sizeof(lfract));
         *sp = sizeof(buf_);
         return buf_;
       }
@@ -1810,9 +1822,9 @@ class BasicDB : public DB {
           lfract = (int64_t)(dfract * DECUNIT);
         }
         linteg = hton64(linteg);
-        std::memcpy(buf_, &linteg, sizeof(linteg));
+        mymemcpy(buf_, &linteg, sizeof(linteg));
         lfract = hton64(lfract);
-        std::memcpy(buf_ + sizeof(linteg), &lfract, sizeof(lfract));
+        mymemcpy(buf_ + sizeof(linteg), &lfract, sizeof(lfract));
         *sp = sizeof(buf_);
         return buf_;
       }
@@ -1964,7 +1976,7 @@ class BasicDB : public DB {
       const char* visit_full(const char* kbuf, size_t ksiz,
                              const char* vbuf, size_t vsiz, size_t* sp) {
         vbuf_ = new char[vsiz+1];
-        std::memcpy(vbuf_, vbuf, vsiz);
+        mymemcpy(vbuf_, vbuf, vsiz);
         vbuf_[vsiz] = '\0';
         vsiz_ = vsiz;
         return NOP;
@@ -2042,7 +2054,7 @@ class BasicDB : public DB {
                              const char* vbuf, size_t vsiz, size_t* sp) {
         vsiz_ = vsiz;
         size_t max = vsiz < max_ ? vsiz : max_;
-        std::memcpy(vbuf_, vbuf, max);
+        mymemcpy(vbuf_, vbuf, max);
         return NOP;
       }
       char* vbuf_;
@@ -2121,7 +2133,7 @@ class BasicDB : public DB {
       const char* visit_full(const char* kbuf, size_t ksiz,
                              const char* vbuf, size_t vsiz, size_t* sp) {
         vbuf_ = new char[vsiz+1];
-        std::memcpy(vbuf_, vbuf, vsiz);
+        mymemcpy(vbuf_, vbuf, vsiz);
         vbuf_[vsiz] = '\0';
         vsiz_ = vsiz;
         return REMOVE;
