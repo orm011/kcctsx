@@ -61,7 +61,7 @@ class DB {
      * @return If it is the pointer to a region, the value is replaced by the content.  If it
      * is Visitor::NOP, nothing is modified.  If it is Visitor::REMOVE, the record is removed.
      */
-    virtual const char* visit_full(const char* kbuf, size_t ksiz,
+    virtual const char* __attribute__((transaction_safe)) visit_full(const char* kbuf, size_t ksiz,
                                    const char* vbuf, size_t vsiz, size_t* sp) {
       _assert_(kbuf && ksiz <= MEMMAXSIZ && vbuf && vsiz <= MEMMAXSIZ && sp);
       return NOP;
@@ -92,6 +92,26 @@ class DB {
       _assert_(true);
     }
   };
+
+  class PureReadVisitor : public Visitor {
+  public:
+
+    const char*  visit_full(const char* kbuf, size_t ksiz,
+          const char* vbuf, size_t vsiz, size_t* sp) {
+      auto buf2 = std::unique_ptr<char[]>(new char[ksiz + vsiz]);
+      auto kbuf2 = buf2.get();
+      auto vbuf2 = buf2.get() + ksiz;
+      memcpy(kbuf2, kbuf, ksiz);
+      memcpy(vbuf2, vbuf, vsiz);
+      return pure_visit_full(kbuf2, ksiz, vbuf2, vsiz, sp);
+    }
+
+    virtual const char* __attribute__((transaction_pure))
+      pure_visit_full(const char* kbuf, size_t ksiz,
+          const char* vbuf, size_t vsiz, size_t* sp) = 0;
+  };
+
+
   /**
    * Interface of cursor to indicate a record.
    */
@@ -782,7 +802,7 @@ class BasicDB : public DB {
      */
     bool get(std::string* key, std::string* value, bool step = false) {
       _assert_(key && value);
-      class VisitorImpl : public Visitor {
+      class VisitorImpl : public PureReadVisitor {
        public:
         explicit VisitorImpl(std::string* key, std::string* value) :
             key_(key), value_(value), ok_(false) {}
@@ -790,7 +810,7 @@ class BasicDB : public DB {
           return ok_;
         }
        private:
-        const char* visit_full(const char* kbuf, size_t ksiz,
+        const char* pure_visit_full(const char* kbuf, size_t ksiz,
                                const char* vbuf, size_t vsiz, size_t* sp) {
           key_->clear();
           key_->append(kbuf, ksiz);
@@ -871,7 +891,7 @@ class BasicDB : public DB {
      */
     bool seize(std::string* key, std::string* value) {
       _assert_(key && value);
-      class VisitorImpl : public Visitor {
+      class VisitorImpl : public PureReadVisitor {
        public:
         explicit VisitorImpl(std::string* key, std::string* value) :
             key_(key), value_(value), ok_(false) {}
@@ -879,7 +899,7 @@ class BasicDB : public DB {
           return ok_;
         }
        private:
-        const char* visit_full(const char* kbuf, size_t ksiz,
+        const char* pure_visit_full(const char* kbuf, size_t ksiz,
                                const char* vbuf, size_t vsiz, size_t* sp) {
           key_->clear();
           key_->append(kbuf, ksiz);
@@ -1717,8 +1737,9 @@ class BasicDB : public DB {
           num_ = linteg + (double)lfract / DECUNIT;
           return NOP;
         }
-        long double dinteg;
-        long double dfract = std::modfl(num_, &dinteg);
+        assert(0);// dont call this function
+        long double dinteg = 0.0;
+        long double dfract = 0.0; //= std::modfl(num_, &dinteg);
         if (chknan(dinteg)) {
           linteg = INT64MIN;
           lfract = INT64MIN;
@@ -1948,14 +1969,14 @@ class BasicDB : public DB {
    */
   bool get(const std::string& key, std::string* value) {
     _assert_(value);
-    class VisitorImpl : public Visitor {
+    class VisitorImpl : public PureReadVisitor {
      public:
       explicit VisitorImpl(std::string* value) : value_(value), ok_(false) {}
       bool ok() {
         return ok_;
       }
      private:
-      const char* visit_full(const char* kbuf, size_t ksiz,
+      const char* pure_visit_full(const char* kbuf, size_t ksiz,
                              const char* vbuf, size_t vsiz, size_t* sp) {
         value_->clear();
         value_->append(vbuf, vsiz);
@@ -2105,14 +2126,14 @@ class BasicDB : public DB {
    */
   bool seize(const std::string& key, std::string* value) {
     _assert_(value);
-    class VisitorImpl : public Visitor {
+    class VisitorImpl : public PureReadVisitor {
      public:
       explicit VisitorImpl(std::string* value) : value_(value), ok_(false) {}
       bool ok() {
         return ok_;
       }
      private:
-      const char* visit_full(const char* kbuf, size_t ksiz,
+      const char* pure_visit_full(const char* kbuf, size_t ksiz,
                              const char* vbuf, size_t vsiz, size_t* sp) {
         value_->clear();
         value_->append(vbuf, vsiz);
@@ -2147,11 +2168,11 @@ class BasicDB : public DB {
         keys.push_back(rit->first);
         ++rit;
       }
-      class VisitorImpl : public Visitor {
+      class VisitorImpl : public PureReadVisitor {
        public:
         explicit VisitorImpl(const std::map<std::string, std::string>& recs) : recs_(recs) {}
        private:
-        const char* visit_full(const char* kbuf, size_t ksiz,
+        const char* pure_visit_full(const char* kbuf, size_t ksiz,
                                const char* vbuf, size_t vsiz, size_t* sp) {
           std::map<std::string, std::string>::const_iterator rit =
               recs_.find(std::string(kbuf, ksiz));
@@ -2232,11 +2253,11 @@ class BasicDB : public DB {
                    std::map<std::string, std::string>* recs, bool atomic = true) {
     _assert_(recs);
     if (atomic) {
-      class VisitorImpl : public Visitor {
+      class VisitorImpl : public PureReadVisitor {
        public:
         explicit VisitorImpl(std::map<std::string, std::string>* recs) : recs_(recs) {}
        private:
-        const char* visit_full(const char* kbuf, size_t ksiz,
+        const char* pure_visit_full(const char* kbuf, size_t ksiz,
                                const char* vbuf, size_t vsiz, size_t* sp) {
           (*recs_)[std::string(kbuf, ksiz)] = std::string(vbuf, vsiz);
           return NOP;
@@ -2269,6 +2290,7 @@ class BasicDB : public DB {
    * @return true on success, or false on failure.
    */
   bool dump_snapshot(std::ostream* dest, ProgressChecker* checker = NULL) {
+    assert(("dont call me", 0))
     _assert_(dest);
     if (dest->fail()) {
       set_error(_KCCODELINE_, Error::INVALID, "invalid stream");
@@ -2284,9 +2306,9 @@ class BasicDB : public DB {
         *(wp++) = 0x00;
         wp += writevarnum(wp, ksiz);
         wp += writevarnum(wp, vsiz);
-        dest_->write(stack_, wp - stack_);
-        dest_->write(kbuf, ksiz);
-        dest_->write(vbuf, vsiz);
+//        dest_->write(stack_, wp - stack_);
+//        dest_->write(kbuf, ksiz);
+//        dest_->write(vbuf, vsiz);
         return NOP;
       }
       std::ostream* dest_;
