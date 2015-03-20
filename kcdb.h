@@ -49,6 +49,7 @@ inline void * __attribute__((transaction_safe)) mymemcpy(void *dest, const void 
   return dest;
 }
 
+__attribute__((transaction_pure)) void __assert_fail(const char*, const char*, unsigned int, const char*) throw ();
 
 namespace kyotocabinet {                 // common namespace
 

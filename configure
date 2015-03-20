@@ -2109,7 +2109,7 @@ MYPCFILES="kyotocabinet.pc"
 MYCFLAGS="-Wall -ansi -pedantic -fPIC -fsigned-char -g0 -O2"
 MYCXXFLAGS="-std=c++11 -fgnu-tm -Wall -fPIC -fsigned-char -g0 -O2"
 MYCPPFLAGS="-I. -I\$(INCLUDEDIR) -I/usr/local/include"
-MYCPPFLAGS="$MYCPPFLAGS -DNDEBUG -D_GNU_SOURCE=1"
+MYCPPFLAGS="$MYCPPFLAGS -D_GNU_SOURCE=1" #-DNDEBUG
 MYCPPFLAGS="$MYCPPFLAGS -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__EXTENSIONS__"
 MYLDFLAGS="-litm -L. -L\$(LIBDIR) -L/usr/local/lib"
 MYCMDLDFLAGS=""
