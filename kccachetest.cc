@@ -2022,24 +2022,24 @@ static int32_t proctran(int64_t rnum, int32_t thnum, int32_t itnum,
            private:
             const char* visit_full(const char* kbuf, size_t ksiz,
                                    const char* vbuf, size_t vsiz, size_t* sp) {
-//              return visit_empty(kbuf, ksiz, sp);
-              return nullptr; // TODO: fix visit_empty
+              return visit_empty(kbuf, ksiz, sp);
             }
             const char* visit_empty(const char* kbuf, size_t ksiz, size_t* sp) {
               const char* rv = NOP;
-              switch (myrand(3)) {
-                case 0: {
-                  rv = vbuf_;
-                  *sp = vsiz_;
-                  if (paradb_) paradb_->set(kbuf, ksiz, vbuf_, vsiz_);
-                  break;
-                }
-                case 1: {
-                  rv = REMOVE;
-                  if (paradb_) paradb_->remove(kbuf, ksiz);
-                  break;
-                }
-              }
+//              switch (myrand(3)) {
+//                case 0: {
+//                  rv = vbuf_;
+//                  *sp = vsiz_;
+//                  if (paradb_) paradb_->set(kbuf, ksiz, vbuf_, vsiz_);
+//                  break;
+//                }
+//                case 1: {
+//                  rv = REMOVE;
+//                  if (paradb_) paradb_->remove(kbuf, ksiz);
+//                  break;
+//                }
+//              }
+              assert(0);
               return rv;
             }
             const char* vbuf_;

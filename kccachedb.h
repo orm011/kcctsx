@@ -1759,9 +1759,8 @@ const char* vbuf = visitor->visit_full(dbuf, rksiz, rvbuf, rvsiz, &vsiz);
         }
       }
     }
-// TODO: fix visitor
     size_t vsiz = 0;
-    const char* vbuf = nullptr; //= visitor->visit_empty(kbuf, ksiz, &vsiz);
+    const char* vbuf = visitor->visit_empty(kbuf, ksiz, &vsiz);
     if (vbuf != Visitor::NOP && vbuf != Visitor::REMOVE) {
       char* zbuf = NULL;
       assert(!comp);

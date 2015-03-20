@@ -87,7 +87,7 @@ class DB {
      * @return If it is the pointer to a region, the value is replaced by the content.  If it
      * is Visitor::NOP or Visitor::REMOVE, nothing is modified.
      */
-    virtual const char* visit_empty(const char* kbuf, size_t ksiz, size_t* sp) {
+    virtual const char* __attribute__((transaction_safe)) visit_empty(const char* kbuf, size_t ksiz, size_t* sp) {
       _assert_(kbuf && ksiz <= MEMMAXSIZ && sp);
       return NOP;
     }
@@ -118,9 +118,22 @@ class DB {
       return pure_visit_full(kbuf2, ksiz, vbuf2, vsiz, sp);
     }
 
+    const char*  visit_empty(const char* kbuf, size_t ksiz, size_t* sp) {
+      auto kbuf2 = std::unique_ptr<char[]>(new char[ksiz]);
+      memcpy(kbuf2.get(), kbuf, ksiz);
+      return pure_visit_empty(kbuf2.get(), ksiz, sp);
+    }
+
     virtual const char* __attribute__((transaction_pure))
       pure_visit_full(const char* kbuf, size_t ksiz,
           const char* vbuf, size_t vsiz, size_t* sp) = 0;
+
+    virtual const char* __attribute__((transaction_pure))
+      pure_visit_empty(const char* kbuf, size_t ksiz, size_t* sp) {
+      _assert_(kbuf && ksiz <= MEMMAXSIZ && sp);
+      return NOP;
+    }
+
   };
 
 
@@ -1782,8 +1795,9 @@ class BasicDB : public DB {
           return NOP;
         }
         if (!chkinf(orig_)) num_ += orig_;
-        long double dinteg;
-        long double dfract = std::modfl(num_, &dinteg);
+        assert(0);// dont call this function
+        long double dinteg = 0.0;
+        long double dfract = 0.0; //std::modfl(num_, &dinteg);
         int64_t linteg, lfract;
         if (chknan(dinteg)) {
           linteg = INT64MIN;
@@ -2192,7 +2206,7 @@ class BasicDB : public DB {
           *sp = rit->second.size();
           return rit->second.data();
         }
-        const char* visit_empty(const char* kbuf, size_t ksiz, size_t* sp) {
+        const char* pure_visit_empty(const char* kbuf, size_t ksiz, size_t* sp) {
           std::map<std::string, std::string>::const_iterator rit =
               recs_.find(std::string(kbuf, ksiz));
           if (rit == recs_.end()) return NOP;
