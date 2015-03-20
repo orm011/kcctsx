@@ -305,10 +305,10 @@ inline void printdb(kc::BasicDB* db, bool px) {
    private:
     const char* visit_full(const char* kbuf, size_t ksiz,
                            const char* vbuf, size_t vsiz, size_t* sp) {
-      printdata(kbuf, ksiz, px_);
-      oputchar('\t');
-      printdata(vbuf, vsiz, px_);
-      oputchar('\n');
+//      printdata(kbuf, ksiz, px_);
+//      oputchar('\t');
+//      printdata(vbuf, vsiz, px_);
+//      oputchar('\n');
       return NOP;
     }
     bool px_;

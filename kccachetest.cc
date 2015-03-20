@@ -1010,24 +1010,26 @@ static int32_t procorder(int64_t rnum, int32_t thnum, bool rnd, bool etc, bool t
      private:
       const char* visit_full(const char* kbuf, size_t ksiz,
                              const char* vbuf, size_t vsiz, size_t* sp) {
-        cnt_++;
-        const char* rv = NOP;
-        switch (rnd_ ? myrand(7) : cnt_ % 7) {
-          case 0: {
-            rv = rbuf_;
-            *sp = rnd_ ? myrand(sizeof(rbuf_)) : sizeof(rbuf_) / (cnt_ % 5 + 1);
-            break;
-          }
-          case 1: {
-            rv = REMOVE;
-            break;
-          }
-        }
-        if (rnum_ > 250 && cnt_ % (rnum_ / 250) == 0) {
-          oputchar('.');
-          if (cnt_ == rnum_ || cnt_ % (rnum_ / 10) == 0) oprintf(" (%08lld)\n", (long long)cnt_);
-        }
-        return rv;
+//        cnt_++;
+//        const char* rv = NOP;
+//        switch (rnd_ ? myrand(7) : cnt_ % 7) {
+//          case 0: {
+//            rv = rbuf_;
+//            *sp = rnd_ ? myrand(sizeof(rbuf_)) : sizeof(rbuf_) / (cnt_ % 5 + 1);
+//            break;
+//          }
+//          case 1: {
+//            rv = REMOVE;
+//            break;
+//          }
+//        }
+//        if (rnum_ > 250 && cnt_ % (rnum_ / 250) == 0) {
+//          oputchar('.');
+//          if (cnt_ == rnum_ || cnt_ % (rnum_ / 10) == 0) oprintf(" (%08lld)\n", (long long)cnt_);
+//        }
+//        return rv;
+        assert(("FIXME", 0));
+        return nullptr;
       }
       int64_t rnum_;
       bool rnd_;
@@ -1071,24 +1073,26 @@ static int32_t procorder(int64_t rnum, int32_t thnum, bool rnd, bool etc, bool t
      private:
       const char* visit_full(const char* kbuf, size_t ksiz,
                              const char* vbuf, size_t vsiz, size_t* sp) {
-        cnt_++;
-        const char* rv = NOP;
-        switch (rnd_ ? myrand(7) : cnt_ % 7) {
-          case 0: {
-            rv = rbuf_;
-            *sp = rnd_ ? myrand(sizeof(rbuf_)) : sizeof(rbuf_) / (cnt_ % 5 + 1);
-            break;
-          }
-          case 1: {
-            rv = REMOVE;
-            break;
-          }
-        }
-        if (rnum_ > 250 && cnt_ % (rnum_ / 250) == 0) {
-          oputchar('.');
-          if (cnt_ == rnum_ || cnt_ % (rnum_ / 10) == 0) oprintf(" (%08lld)\n", (long long)cnt_);
-        }
-        return rv;
+//        cnt_++;
+//        const char* rv = NOP;
+//        switch (rnd_ ? myrand(7) : cnt_ % 7) {
+//          case 0: {
+//            rv = rbuf_;
+//            *sp = rnd_ ? myrand(sizeof(rbuf_)) : sizeof(rbuf_) / (cnt_ % 5 + 1);
+//            break;
+//          }
+//          case 1: {
+//            rv = REMOVE;
+//            break;
+//          }
+//        }
+//        if (rnum_ > 250 && cnt_ % (rnum_ / 250) == 0) {
+//          oputchar('.');
+//          if (cnt_ == rnum_ || cnt_ % (rnum_ / 10) == 0) oprintf(" (%08lld)\n", (long long)cnt_);
+//        }
+//        return rv;
+        assert(("FIXME", 0));
+        return nullptr;
       }
       int64_t rnum_;
       bool rnd_;
@@ -2018,7 +2022,8 @@ static int32_t proctran(int64_t rnum, int32_t thnum, int32_t itnum,
            private:
             const char* visit_full(const char* kbuf, size_t ksiz,
                                    const char* vbuf, size_t vsiz, size_t* sp) {
-              return visit_empty(kbuf, ksiz, sp);
+//              return visit_empty(kbuf, ksiz, sp);
+              return nullptr; // TODO: fix visit_empty
             }
             const char* visit_empty(const char* kbuf, size_t ksiz, size_t* sp) {
               const char* rv = NOP;
@@ -2096,7 +2101,8 @@ static int32_t proctran(int64_t rnum, int32_t thnum, int32_t itnum,
               const char* visit_full(const char* kbuf, size_t ksiz,
                                      const char* vbuf, size_t vsiz, size_t* sp) {
                 if (myrand(200) == 0) return NOP;
-                if (paradb_) paradb_->remove(kbuf, ksiz);
+                assert(("TODO", 0));
+                //if (paradb_) paradb_->remove(kbuf, ksiz);
                 return REMOVE;
               }
               kc::BasicDB* paradb_;
@@ -2185,19 +2191,20 @@ static int32_t proctran(int64_t rnum, int32_t thnum, int32_t itnum,
      private:
       const char* visit_full(const char* kbuf, size_t ksiz,
                              const char* vbuf, size_t vsiz, size_t* sp) {
-        cnt_++;
-        size_t rsiz;
-        char* rbuf = paradb_->get(kbuf, ksiz, &rsiz);
-        if (rbuf) {
-          delete[] rbuf;
-        } else {
-          dberrprint(paradb_, __LINE__, "DB::get");
-          err_ = true;
-        }
-        if (rnum_ > 250 && cnt_ % (rnum_ / 250) == 0) {
-          oputchar('.');
-          if (cnt_ == rnum_ || cnt_ % (rnum_ / 10) == 0) oprintf(" (%08lld)\n", (long long)cnt_);
-        }
+//        cnt_++;
+//        size_t rsiz;
+        //char* rbuf = paradb_->get(kbuf, ksiz, &rsiz);
+//        if (rbuf) {
+//          delete[] rbuf;
+//        } else {
+//          dberrprint(paradb_, __LINE__, "DB::get");
+//          err_ = true;
+//        }
+//        if (rnum_ > 250 && cnt_ % (rnum_ / 250) == 0) {
+//          oputchar('.');
+//          if (cnt_ == rnum_ || cnt_ % (rnum_ / 10) == 0) oprintf(" (%08lld)\n", (long long)cnt_);
+//        }
+        assert(("FIXME", 0));
         return NOP;
       }
       int64_t rnum_;
