@@ -2090,10 +2090,10 @@ MYFORMATVER=5
 
 # Targets
 MYHEADERFILES="kcutil.h kcthread.h kcfile.h kccompress.h kccompare.h kcregex.h"
-MYHEADERFILES="$MYHEADERFILES kcdb.h kccachedb.h kclangc.h kccommon.h"
+MYHEADERFILES="$MYHEADERFILES kcdb.h kccachedb.h kccommon.h"
 MYLIBRARYFILES="libkyotocabinet.a"
 MYLIBOBJFILES="kcutil.o kcthread.o kcfile.o kccompress.o kccompare.o kcregex.o"
-MYLIBOBJFILES="$MYLIBOBJFILES kcdb.o kccachedb.o kclangc.o"
+MYLIBOBJFILES="$MYLIBOBJFILES kcdb.o kccachedb.o"
 MYCOMMANDFILES="kcutiltest kcutilmgr kcprototest kcstashtest kccachetest kcgrasstest"
 MYCOMMANDFILES="$MYCOMMANDFILES kchashtest kchashmgr kctreetest kctreemgr"
 MYCOMMANDFILES="$MYCOMMANDFILES kcdirtest kcdirmgr kcforesttest kcforestmgr"
