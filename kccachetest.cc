@@ -1706,43 +1706,44 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
                 }
                 break;
               }
-              case 3: {
+              case 3:
+              case 4: {
                 if (!db_->append(kbuf, ksiz, vbuf, vsiz)) {
                   dberrprint(db_, __LINE__, "DB::append");
                   err_ = true;
                 }
                 break;
               }
-              case 4: {
-                if (myrand(2) == 0) {
-                  int64_t num = myrand(rnum_);
-                  int64_t orig = myrand(10) == 0 ? kc::INT64MIN : myrand(rnum_);
-                  if (myrand(10) == 0) orig = orig == kc::INT64MIN ? kc::INT64MAX : -orig;
-                  if (db_->increment(kbuf, ksiz, num, orig) == kc::INT64MIN &&
-                      db_->error() != kc::BasicDB::Error::LOGIC) {
-                    dberrprint(db_, __LINE__, "DB::increment");
-                    err_ = true;
-                  }
-                } else {
-                  double num = myrand(rnum_ * 10) / (myrand(rnum_) + 1.0);
-                  double orig = myrand(10) == 0 ? -kc::inf() : myrand(rnum_);
-                  if (myrand(10) == 0) orig = -orig;
-                  if (kc::chknan(db_->increment_double(kbuf, ksiz, num, orig)) &&
-                      db_->error() != kc::BasicDB::Error::LOGIC) {
-                    dberrprint(db_, __LINE__, "DB::increment_double");
-                    err_ = true;
-                  }
-                }
-                break;
-              }
-              case 5: {
-                if (!db_->cas(kbuf, ksiz, kbuf, ksiz, vbuf, vsiz) &&
-                    db_->error() != kc::BasicDB::Error::LOGIC) {
-                  dberrprint(db_, __LINE__, "DB::cas");
-                  err_ = true;
-                }
-                break;
-              }
+//              case 4: {
+//                if (myrand(2) == 0) {
+//                  int64_t num = myrand(rnum_);
+//                  int64_t orig = myrand(10) == 0 ? kc::INT64MIN : myrand(rnum_);
+//                  if (myrand(10) == 0) orig = orig == kc::INT64MIN ? kc::INT64MAX : -orig;
+//                  if (db_->increment(kbuf, ksiz, num, orig) == kc::INT64MIN &&
+//                      db_->error() != kc::BasicDB::Error::LOGIC) {
+//                    dberrprint(db_, __LINE__, "DB::increment");
+//                    err_ = true;
+//                  }
+//                } else {
+//                  double num = myrand(rnum_ * 10) / (myrand(rnum_) + 1.0);
+//                  double orig = myrand(10) == 0 ? -kc::inf() : myrand(rnum_);
+//                  if (myrand(10) == 0) orig = -orig;
+//                  if (kc::chknan(db_->increment_double(kbuf, ksiz, num, orig)) &&
+//                      db_->error() != kc::BasicDB::Error::LOGIC) {
+//                    dberrprint(db_, __LINE__, "DB::increment_double");
+//                    err_ = true;
+//                  }
+//                }
+//                break;
+//              }
+//              case 5: {
+//                if (!db_->cas(kbuf, ksiz, kbuf, ksiz, vbuf, vsiz) &&
+//                    db_->error() != kc::BasicDB::Error::LOGIC) {
+//                  dberrprint(db_, __LINE__, "DB::cas");
+//                  err_ = true;
+//                }
+//                break;
+//              }
               case 6: {
                 if (!db_->remove(kbuf, ksiz) &&
                     db_->error() != kc::BasicDB::Error::NOREC) {
