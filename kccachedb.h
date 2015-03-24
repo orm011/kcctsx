@@ -1659,8 +1659,8 @@ class CacheDB : public BasicDB {
 //              rvsiz = zsiz;
 //            }
 //          }
-size_t vsiz = 0;
-const char* vbuf = visitor->visit_full(dbuf, rksiz, rvbuf, rvsiz, &vsiz);
+          size_t vsiz = 0;
+          const char* vbuf = visitor->visit_full(dbuf, rksiz, rvbuf, rvsiz, &vsiz);
           delete[] zbuf;
           if (vbuf == Visitor::REMOVE) {
             if (tran_) {
@@ -1730,7 +1730,7 @@ const char* vbuf = visitor->visit_full(dbuf, rksiz, rvbuf, rvsiz, &vsiz);
                 Record* rec = (Record*)xmalloc(sizeof(*rec) + ksiz + vsiz);
                mymemcpy(rec, old, sizeof(*rec) + ksiz); //only rec + key.
                 // the value gets copied later.
-                if (rec != old) {
+              if (rec != old) {
                   if (!curs_.empty()) adjust_cursors(old, rec);
                   if (slot->first == old) slot->first = rec;
                   if (slot->last == old) slot->last = rec;
