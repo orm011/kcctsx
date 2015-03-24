@@ -127,13 +127,14 @@ class CacheDB : public BasicDB {
       size_t rvsiz = rec_->vsiz;
       char* zbuf = NULL;
       size_t zsiz = 0;
-      if (db_->comp_) {
-        zbuf = db_->comp_->decompress(rvbuf, rvsiz, &zsiz);
-        if (zbuf) {
-          rvbuf = zbuf;
-          rvsiz = zsiz;
-        }
-      }
+      assert(!db_->comp_);
+//      if (db_->comp_) {
+//        zbuf = db_->comp_->decompress(rvbuf, rvsiz, &zsiz);
+//        if (zbuf) {
+//          rvbuf = zbuf;
+//          rvsiz = zsiz;
+//        }
+//      }
       size_t vsiz;
       const char* vbuf = visitor->visit_full(dbuf, rksiz, rvbuf, rvsiz, &vsiz);
       delete[] zbuf;
@@ -756,6 +757,7 @@ class CacheDB : public BasicDB {
       initialize_slot(slots_ + i, bnum, capcnt, capsiz);
     }
     comp_ = (opts_ & TCOMPRESS) ? embcomp_ : NULL;
+    assert(!comp_);
     std::memset(opaque_, 0, sizeof(opaque_));
     trigger_meta(MetaTrigger::OPEN, "open");
     return true;
