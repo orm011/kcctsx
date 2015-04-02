@@ -1681,8 +1681,10 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
             vbuf = lbuf_;
             vsiz = myrand(RECBUFSIZL) / (myrand(5) + 1);
           }
+
+          int turn = 100;
           do {
-            switch (myrand(50/*9*/)) { // TODO: make 90% read-only operations
+            switch (turn % 50) {
               case 0: {
                 if (!db_->set(kbuf, ksiz, vbuf, vsiz)) {
                   dberrprint(db_, __LINE__, "DB::set");
@@ -1824,7 +1826,7 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
                 break;
               }
             }
-          } while (myrand(100) == 0);
+          } while (--turn);
 
 /*
  * These are bulk set/get/remove
