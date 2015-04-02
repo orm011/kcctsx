@@ -1682,7 +1682,7 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
             vsiz = myrand(RECBUFSIZL) / (myrand(5) + 1);
           }
           do {
-            switch (myrand(99/*9*/)) { // TODO: make 90% read-only operations
+            switch (myrand(50/*9*/)) { // TODO: make 90% read-only operations
               case 0: {
                 if (!db_->set(kbuf, ksiz, vbuf, vsiz)) {
                   dberrprint(db_, __LINE__, "DB::set");
@@ -1706,8 +1706,7 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
                 }
                 break;
               }
-              case 3:
-              case 4: {
+              case 3: {
                 if (!db_->append(kbuf, ksiz, vbuf, vsiz)) {
                   dberrprint(db_, __LINE__, "DB::append");
                   err_ = true;
