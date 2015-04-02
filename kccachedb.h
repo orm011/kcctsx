@@ -1728,8 +1728,9 @@ class CacheDB : public BasicDB {
                 //xrealloc is not transaction safe bc realloc is not
                 //so, using the more expensive xmalloc  +mymemcpy
                 //instead for now.
-                Record* rec = (Record*)xmalloc(sizeof(*rec) + ksiz + vsiz);
-               mymemcpy(rec, old, sizeof(*rec) + ksiz); //only rec + key.
+                rec = (Record*)xmalloc(sizeof(*rec) + ksiz + vsiz);
+                mymemcpy(rec, old, sizeof(*rec) + ksiz); //only rec + key.
+                xfree(old);
                 // the value gets copied later.
               if (rec != old) {
                   if (!curs_.empty()) adjust_cursors(old, rec);
