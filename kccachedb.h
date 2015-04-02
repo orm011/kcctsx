@@ -1572,7 +1572,7 @@ class CacheDB : public BasicDB {
 //      }
 //
 //      assert (cnt == count);
-//    }
+    }
   };
 
 
