@@ -23,6 +23,27 @@ uint32_t g_randseed;                     // random seed
 int64_t g_memusage;                      // memory usage
 
 
+int MarsagliaXOR(int *p_seed) {
+    int seed = *p_seed;
+
+    if (seed == 0) {
+        seed = 1;
+    }
+
+    seed ^= seed << 6;
+    seed ^= ((unsigned)seed) >> 21;
+    seed ^= seed << 7;
+
+    *p_seed = seed;
+
+    return seed & 0x7FFFFFFF;
+}
+
+
+int myrandmarsaglia(int range, int * seedp) {
+  return MarsagliaXOR(seedp) % range;
+}
+
 // function prototypes
 int main(int argc, char** argv);
 static void usage();
@@ -1626,6 +1647,8 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
       err = true;
     }
     class ThreadWicked : public kc::Thread {
+      int * seedp_ = nullptr;
+
      public:
       void setparams(int32_t id, kc::CacheDB* db, int64_t rnum, int32_t thnum,
                      const char* lbuf) {
@@ -1635,11 +1658,18 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
         thnum_ = thnum;
         lbuf_ = lbuf;
         err_ = false;
+        seedp_ = new int(id_);
       }
+
+      int myrand(int i){
+        return myrandmarsaglia(i, seedp_);
+      }
+
       bool error() {
         return err_;
       }
       void run() {
+        printf("id: %d. rnum: %ld\n", id_, rnum_);
         //kc::DB::Cursor* cur = db_->cursor();
         int64_t range = rnum_ * thnum_ / 2;
         for (int64_t i = 1; !err_ && i <= rnum_; i++) {
