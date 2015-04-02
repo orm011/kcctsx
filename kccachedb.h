@@ -412,7 +412,7 @@ class CacheDB : public BasicDB {
    */
   bool accept(const char* kbuf, size_t ksiz, Visitor* visitor, bool writable = true) {
     __transaction_atomic {
-    _assert_(kbuf && ksiz <= MEMMAXSIZ && visitor);
+    assert(kbuf && ksiz <= MEMMAXSIZ && visitor);
     //ScopedRWLock lock(&mlock_, false);
     if (omode_ == 0) {
       assert(0);
