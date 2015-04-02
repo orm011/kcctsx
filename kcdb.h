@@ -40,7 +40,7 @@ inline int __attribute__((transaction_safe)) mymemcmp(const void *s1, const void
 
 inline void * __attribute__((transaction_safe)) mymemcpy(void *dest, const void *src, size_t n) {
   char * destch = (char*)dest;
-  char * srcch = (char*)src;
+  const char * srcch = (const char*)src;
 
   for (size_t i = 0; i < n; ++i) {
     destch[i] = srcch[i];
