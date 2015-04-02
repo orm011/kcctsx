@@ -1541,38 +1541,38 @@ class CacheDB : public BasicDB {
     size_t trsize;                       ///< size before transaction
 
     void repcheck() const {
-      bool fnull = (first == NULL);
-      bool lnull = (last == NULL);
-      bool czero = (count == 0);
-      bool szero = (size == 0);
-
-      bool empty = fnull && lnull && czero && szero;
-      bool nonemp = !fnull && !lnull && !czero && !szero;
-      // not checking buckets at the moment, but yes linked list.
-
-      assert (empty || nonemp);
-      auto * mylast = last;
-      int cnt = 0;
-
-      if (!fnull) {
-        assert(first->prev == NULL);
-        assert(last);
-        assert(last->next == NULL);
-      }
-
-      while (mylast != NULL) {
-        if (mylast->prev) {
-          assert (mylast->prev->next);
-          assert (mylast->prev->next == mylast);
-        }
-
-        mylast = mylast->prev;
-        cnt++;
-        assert (cnt <= count);
-      }
-
-      assert (cnt == count);
-    }
+//      bool fnull = (first == NULL);
+//      bool lnull = (last == NULL);
+//      bool czero = (count == 0);
+//      bool szero = (size == 0);
+//
+//      bool empty = fnull && lnull && czero && szero;
+//      bool nonemp = !fnull && !lnull && !czero && !szero;
+//      // not checking buckets at the moment, but yes linked list.
+//
+//      assert (empty || nonemp);
+//      auto * mylast = last;
+//      int cnt = 0;
+//
+//      if (!fnull) {
+//        assert(first->prev == NULL);
+//        assert(last);
+//        assert(last->next == NULL);
+//      }
+//
+//      while (mylast != NULL) {
+//        if (mylast->prev) {
+//          assert (mylast->prev->next);
+//          assert (mylast->prev->next == mylast);
+//        }
+//
+//        mylast = mylast->prev;
+//        cnt++;
+//        assert (cnt <= count);
+//      }
+//
+//      assert (cnt == count);
+//    }
   };
 
 
