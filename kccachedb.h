@@ -1041,7 +1041,7 @@ class CacheDB : public BasicDB {
    * released with the delete operator when it is no longer in use.
    */
   Cursor* cursor() {
-    _assert_(true);
+    assert(false);
     return new Cursor(this);
   }
   /**
