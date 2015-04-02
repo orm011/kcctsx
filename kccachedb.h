@@ -1539,7 +1539,43 @@ class CacheDB : public BasicDB {
     size_t size;                         ///< total size of records
     TranLogList trlogs;                  ///< transaction logs
     size_t trsize;                       ///< size before transaction
+
+    void repcheck() const {
+      bool fnull = (first == NULL);
+      bool lnull = (last == NULL);
+      bool czero = (count == 0);
+      bool szero = (size == 0);
+
+      bool empty = fnull && lnull && czero && szero;
+      bool nonemp = !fnull && !lnull && !czero && !szero;
+      // not checking buckets at the moment, but yes linked list.
+
+      assert (empty || nonemp);
+      auto * mylast = last;
+      int cnt = 0;
+
+      if (!fnull) {
+        assert(first->prev == NULL);
+        assert(last);
+        assert(last->next == NULL);
+      }
+
+      while (mylast != NULL) {
+        if (mylast->prev) {
+          assert (mylast->prev->next);
+          assert (mylast->prev->next == mylast);
+        }
+
+        mylast = mylast->prev;
+        cnt++;
+        assert (cnt <= count);
+      }
+
+      assert (cnt == count);
+    }
   };
+
+
   /**
    * Repeating visitor.
    */
@@ -1626,6 +1662,7 @@ class CacheDB : public BasicDB {
                    Compressor* comp, bool rtt) {
     _assert_(slot && kbuf && ksiz <= MEMMAXSIZ && visitor);
     size_t bidx = hash % slot->bnum;
+    slot->repcheck();
     Record* rec = slot->buckets[bidx];
     Record** entp = slot->buckets + bidx;
     uint32_t fhash = fold_hash(hash) & ~KSIZMAX;
@@ -1663,6 +1700,7 @@ class CacheDB : public BasicDB {
           size_t vsiz = 0;
           const char* vbuf = visitor->visit_full(dbuf, rksiz, rvbuf, rvsiz, &vsiz);
           delete[] zbuf;
+          slot->repcheck();
           if (vbuf == Visitor::REMOVE) {
             if (tran_) {
               assert(false);
@@ -1670,6 +1708,7 @@ class CacheDB : public BasicDB {
 //              slot->trlogs.push_back(log);
             }
             if (!curs_.empty()) escape_cursors(rec);
+            slot->repcheck();
             if (rec == slot->first) slot->first = rec->next;
             if (rec == slot->last) slot->last = rec->prev;
             if (rec->prev) rec->prev->next = rec->next;
@@ -1698,8 +1737,10 @@ class CacheDB : public BasicDB {
                 pivot->right = rec->right;
               }
             }
+
             slot->count--;
             slot->size -= sizeof(Record) + rksiz + rec->vsiz;
+            slot->repcheck();
             xfree(rec);
           } else {
             bool adj = false;
@@ -1746,7 +1787,10 @@ class CacheDB : public BasicDB {
               rec->vsiz = vsiz;
               delete[] zbuf;
             }
+            slot->repcheck();
+
             if (rtt && slot->last != rec) {
+              assert(rec->next);
               if (!curs_.empty()) escape_cursors(rec);
               if (slot->first == rec) slot->first = rec->next;
               if (rec->prev) rec->prev->next = rec->next;
@@ -1755,15 +1799,19 @@ class CacheDB : public BasicDB {
               rec->next = NULL;
               slot->last->next = rec;
               slot->last = rec;
+              slot->repcheck();
             }
+
             if (adj) adjust_slot_capacity(slot);
           }
+          slot->repcheck();
           return;
         }
       }
     }
     size_t vsiz = 0;
     const char* vbuf = visitor->visit_empty(kbuf, ksiz, &vsiz);
+    slot->repcheck();
     if (vbuf != Visitor::NOP && vbuf != Visitor::REMOVE) {
       char* zbuf = NULL;
       assert(!comp);
@@ -1780,6 +1828,7 @@ class CacheDB : public BasicDB {
 //        TranLog log(kbuf, ksiz);
 //        slot->trlogs.push_back(log);
       }
+      slot->repcheck();
       slot->size += sizeof(Record) + ksiz + vsiz;
       rec = (Record*)xmalloc(sizeof(*rec) + ksiz + vsiz);
       char* dbuf = (char*)rec + sizeof(*rec);
@@ -1797,6 +1846,7 @@ class CacheDB : public BasicDB {
       slot->last = rec;
       slot->count++;
       if (!tran_) adjust_slot_capacity(slot);
+      slot->repcheck();
       delete[] zbuf;
     }
   }
