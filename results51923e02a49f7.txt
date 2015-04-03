@@ -1,0 +1,42 @@
+orm@mit-haswell:~/kyotofork$ for TH in  1 2 4 8 16; do for i in $(seq 1 5); do LD_PRELOAD="/usr/lib/libtcmalloc_minimal.so.4" ITM_DEFAULT_METHOD=serialirr LD_LIBRARY_PATH=. ./kccachetest wicked -th $TH 50000 | grep time; done | sort | awk '{ printf("%s ",$2); }'; echo ''; done
+serialirr 1 0.435 0.441 0.444 0.444 0.457 
+serialirr 2 0.953 1.011 1.014 1.017 1.034 
+serialirr 4 2.107 2.140 2.177 2.250 2.266 
+serialirr 8 3.006 3.133 3.180 3.200 3.204 
+serialirr 16 4.355 4.388 4.492 4.560 4.588
+orm@mit-haswell:~/kyotofork$ for TH in  1 2 4 8; do for i in $(seq 1 5); do LD_PRELOAD="/usr/lib/libtcmalloc_minimal.so.4" ITM_DEFAULT_METHOD=gl_wt LD_LIBRARY_PATH=. ./kccachetest wicked -th $TH 50000 | grep time; done | sort | awk '{ printf("%s ",$2); }'; echo ''; done
+gl_wt 1 1.923 1.923 1.937 1.939 1.949 
+gl_wt 2 2.199 2.239 2.240 2.260 2.265 
+gl_wt 4 2.556 2.579 2.582 2.594 2.660 
+gl_wt 8 3.018 3.064 3.459 3.903 4.070 
+gl_wt 16 5.317 5.392 5.393 5.396 5.585 
+orm@mit-haswell:~/kyotofork$ for TH in  1 2 4 8; do for i in $(seq 1 5); do LD_PRELOAD="/usr/lib/libtcmalloc_minimal.so.4" ITM_DEFAULT_METHOD=ml_wt LD_LIBRARY_PATH=. ./kccachetest wicked -th $TH 50000 | grep time; done | sort | awk '{ printf("%s ",$2); }'; echo ''; done
+ml_wt 1 3.435 3.439 3.455 3.486 3.874 
+ml_wt 2 3.464 3.492 3.511 3.511 3.810 
+ml_wt 4 3.125 3.146 3.166 3.232 3.646 
+ml_wt 8 2.806 2.835 2.991 3.110 3.186 
+orm@mit-haswell:~/kyotofork$ for TH in  1 2 4 8; do for i in $(seq 1 5); do LD_PRELOAD="/usr/lib/libtcmalloc_minimal.so.4" ITM_DEFAULT_METHOD=htm LD_LIBRARY_PATH=. ./kccachetest wicked -th $TH 50000 | grep time; done | sort | awk '{ printf("%s ",$2); }'; echo ''; done
+htm 1 2.095 2.100 2.106 2.111 2.205 
+htm 2 3.881 3.927 3.979 4.010 4.694 
+htm 4 5.482 5.555 5.642 5.912 5.917 
+htm 8 6.817 6.865 6.955 6.964 7.144 
+#removing -ltim and -fgnu-tm, as well as defining __transaction_atomic to empty:
+orm@mit-haswell:~/kyotofork$ for TH in  1; do for i in $(seq 1 5); do LD_PRELOAD="/usr/lib/libtcmalloc_minimal.so.4" LD_LIBRARY_PATH=. ./kccachetest wicked -th $TH 50000 | grep time; done | sort | awk '{ printf("%s ",$2); }'; echo ''; done
+plain 1 0.276 0.277 0.280 0.281 0.318 
+orm@mit-haswell:~/kyotofork$ LD_LIBRARY_PATH=.  perf record -d -e cycles ./kccachetest wicked -th 1 100000 
+# perf results for this un-instrumented code are:
+    36.36%  kccachetest  kccachetest                 [.] kyotocabinet::CacheDB::accept_impl(kyotocabinet::CacheDB::Slot*, unsigned long, char const*, unsigned long, kyotocabinet::DB::Visitor*, kyotocabinet::Compressor*, bool)               
+    14.22%  kccachetest  kccachetest                 [.] kyotocabinet::BasicDB::get(char const*, unsigned long, unsigned long*)::VisitorImpl::visit_full(char const*, unsigned long, char const*, unsigned long, unsigned long*)                
+    12.64%  kccachetest  kccachetest                 [.] kyotocabinet::CacheDB::accept(char const*, unsigned long, kyotocabinet::DB::Visitor*, bool)                                                                                            
+     7.74%  kccachetest  libc-2.19.so                [.] _int_free                                                                                                                                                                              
+     6.44%  kccachetest  libc-2.19.so                [.] _int_malloc                                                                                                                                                                            
+     4.87%  kccachetest  libc-2.19.so                [.] malloc                                                                                                                                                                                 
+     4.56%  kccachetest  kccachetest                 [.] procwicked(long, int, int, int, long, long, long, bool)::ThreadWicked::run()                                                                                                           
+     3.30%  kccachetest  kccachetest                 [.] kyotocabinet::BasicDB::get(char const*, unsigned long, unsigned long*)                                                                                                                 
+     1.44%  kccachetest  libstdc++.so.6.0.19         [.] operator new(unsigned long)                                                     
+
+LD_PRELOAD="/usr/lib/libtcmalloc_minimal.so.4" ITM_DEFAULT_METHOD=htm LD_LIBRARY_PATH=.  perf record -d -e cpu/tx-abort/pp -e L1-dcache-loads,L1-dcache-load-misses -e cycles ./kccachetest wicked -th 1 50000
+The htm problem:
+Samples: 7K of event 'cpu/tx-abort/pp', Event count (approx.): 4808321 
+ 99.46%  kccachetest  kccachetest                   [.] kyotocabinet::CacheDB::accept_impl(kyotocabinet::CacheDB::Slot*, unsigned long, char const*, unsigned long, kyotocabinet::DB::Visitor*, kyoto
+ 
