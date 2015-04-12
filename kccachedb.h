@@ -1815,7 +1815,7 @@ class CacheDB : public BasicDB {
           return;
         }
       }
-    }
+    } // NB. end of while loop.
 
     //_xabort(66);  // t_hardware = 4435804 t_software = 564196
     size_t vsiz = 0;
