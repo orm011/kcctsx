@@ -434,7 +434,6 @@ class CacheDB : public BasicDB {
     Slot* slot = slots_ + sidx;
     //slot->lock.lock();
     accept_impl(slot, hash, kbuf, ksiz, visitor, comp_, rttmode_);
-    //_xabort(66);
     //slot->lock.unlock();
     return true;
     }
@@ -1670,7 +1669,6 @@ class CacheDB : public BasicDB {
     Record* rec = slot->buckets[bidx];
     Record** entp = slot->buckets + bidx;
     uint32_t fhash = fold_hash(hash) & ~KSIZMAX;
-    //_xabort(66);
     while (rec) {
       uint32_t rhash = rec->ksiz & ~KSIZMAX;
       uint32_t rksiz = rec->ksiz & KSIZMAX;
