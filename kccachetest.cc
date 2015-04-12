@@ -1958,7 +1958,7 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
     char lbuf[RECBUFSIZL];
     std::memset(lbuf, '*', sizeof(lbuf));
     ThreadWicked threads[THREADMAX];
-    if (thnum < 2) {
+    if (false ) { //thnum < 2
       threads[0].setparams(0, &db, rnum / thnum, thnum, lbuf);
       threads[0].run();
       if (threads[0].error()) err = true;
