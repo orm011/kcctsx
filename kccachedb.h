@@ -28,6 +28,9 @@
 #include <kcplantdb.h>
 
 #include <assert.h>
+#include <immintrin.h>
+__attribute__((transaction_pure)) void __builtin_ia32_xabort(unsigned int);
+
 
 namespace kyotocabinet {                 // common namespace
 
@@ -431,6 +434,7 @@ class CacheDB : public BasicDB {
     Slot* slot = slots_ + sidx;
     //slot->lock.lock();
     accept_impl(slot, hash, kbuf, ksiz, visitor, comp_, rttmode_);
+    //_xabort(66);
     //slot->lock.unlock();
     return true;
     }
@@ -1666,6 +1670,7 @@ class CacheDB : public BasicDB {
     Record* rec = slot->buckets[bidx];
     Record** entp = slot->buckets + bidx;
     uint32_t fhash = fold_hash(hash) & ~KSIZMAX;
+    //_xabort(66);
     while (rec) {
       uint32_t rhash = rec->ksiz & ~KSIZMAX;
       uint32_t rksiz = rec->ksiz & KSIZMAX;
@@ -1787,10 +1792,12 @@ class CacheDB : public BasicDB {
               rec->vsiz = vsiz;
               delete[] zbuf;
             }
+	    // _xabort(66); still alive here
             slot->repcheck();
 
             if (rtt && slot->last != rec) {
               assert(rec->next);
+	      // _xabort(66); // not much here: here. 
               if (!curs_.empty()) escape_cursors(rec);
               if (slot->first == rec) slot->first = rec->next;
               if (rec->prev) rec->prev->next = rec->next;
@@ -1801,7 +1808,7 @@ class CacheDB : public BasicDB {
               slot->last = rec;
               slot->repcheck();
             }
-
+	    //_xabort(66);
             if (adj) adjust_slot_capacity(slot);
           }
           slot->repcheck();
@@ -1809,8 +1816,12 @@ class CacheDB : public BasicDB {
         }
       }
     }
+
+    //_xabort(66);  // t_hardware = 4435804 t_software = 564196
     size_t vsiz = 0;
     const char* vbuf = visitor->visit_empty(kbuf, ksiz, &vsiz);
+    //_xabort(66); // t_hardware = 4267529 t_software = 732471 t_htm_explicit = 447772
+
     slot->repcheck();
     if (vbuf != Visitor::NOP && vbuf != Visitor::REMOVE) {
       char* zbuf = NULL;
@@ -1849,6 +1860,8 @@ class CacheDB : public BasicDB {
       slot->repcheck();
       delete[] zbuf;
     }
+
+    //_xabort(66);  //t_hardware = 4225442 t_software = 774558.  t_htm_conflicts = 299083 t_htm_capacity = 596 t_htm_explicit = 473346
   }
   /**
    * Get the number of records.
