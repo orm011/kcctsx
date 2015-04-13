@@ -1790,12 +1790,10 @@ class CacheDB : public BasicDB {
               rec->vsiz = vsiz;
               delete[] zbuf;
             }
-	    // _xabort(66); still alive here
             slot->repcheck();
 
             if (rtt && slot->last != rec) {
               assert(rec->next);
-	      // _xabort(66); // not much here: here. 
               if (!curs_.empty()) escape_cursors(rec);
               if (slot->first == rec) slot->first = rec->next;
               if (rec->prev) rec->prev->next = rec->next;
@@ -1806,7 +1804,6 @@ class CacheDB : public BasicDB {
               slot->last = rec;
               slot->repcheck();
             }
-	    //_xabort(66);
             if (adj) adjust_slot_capacity(slot);
           }
           slot->repcheck();
@@ -1814,11 +1811,8 @@ class CacheDB : public BasicDB {
         }
       }
     } // NB. end of while loop.
-
-    //_xabort(66);  // t_hardware = 4435804 t_software = 564196
     size_t vsiz = 0;
     const char* vbuf = visitor->visit_empty(kbuf, ksiz, &vsiz);
-    //_xabort(66); // t_hardware = 4267529 t_software = 732471 t_htm_explicit = 447772
 
     slot->repcheck();
     if (vbuf != Visitor::NOP && vbuf != Visitor::REMOVE) {
@@ -1859,7 +1853,6 @@ class CacheDB : public BasicDB {
       delete[] zbuf;
     }
 
-    //_xabort(66);  //t_hardware = 4225442 t_software = 774558.  t_htm_conflicts = 299083 t_htm_capacity = 596 t_htm_explicit = 473346
   }
   /**
    * Get the number of records.
