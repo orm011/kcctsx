@@ -62,7 +62,7 @@ class CacheDB : public BasicDB {
   /** An alias of list of transaction logs. */
   typedef std::list<TranLog> TranLogList;
   /** The number of slot tables. */
-  static const int32_t SLOTNUM = 16;
+  static const int32_t SLOTNUM = 256;
   /** The default bucket number. */
   static const size_t DEFBNUM = 1048583LL;
   /** The mininum number of buckets to use mmap. */
