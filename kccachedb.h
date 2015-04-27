@@ -414,9 +414,12 @@ class CacheDB : public BasicDB {
    * performed in this function.
    */
   bool accept(const char* kbuf, size_t ksiz, Visitor* visitor, bool writable = true) {
-    __transaction_atomic {
     assert(kbuf && ksiz <= MEMMAXSIZ && visitor);
-    //ScopedRWLock lock(&mlock_, false);
+#if LOCKING != 1
+    __transaction_atomic {
+#else
+    ScopedRWLock lock(&mlock_, false);
+#endif
     if (omode_ == 0) {
       assert(0);
       //set_error(_KCCODELINE_, Error::INVALID, "not opened");
@@ -432,11 +435,16 @@ class CacheDB : public BasicDB {
     int32_t sidx = hash % SLOTNUM;
     hash /= SLOTNUM;
     Slot* slot = slots_ + sidx;
-    //slot->lock.lock();
+#if LOCKING == 1
+    slot->lock.lock();
+#endif
     accept_impl(slot, hash, kbuf, ksiz, visitor, comp_, rttmode_);
-    //slot->lock.unlock();
-    return true;
+#if LOCKING == 1
+    slot->lock.unlock();
+#else
     }
+#endif
+    return true;
   }
   /**
    * Accept a visitor to multiple records at once.
