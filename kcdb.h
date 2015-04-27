@@ -2329,7 +2329,7 @@ class BasicDB : public DB {
    * @return true on success, or false on failure.
    */
   bool dump_snapshot(std::ostream* dest, ProgressChecker* checker = NULL) {
-    assert(("dont call me", 0))
+    assert(0);
     _assert_(dest);
     if (dest->fail()) {
       set_error(_KCCODELINE_, Error::INVALID, "invalid stream");

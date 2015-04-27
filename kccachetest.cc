@@ -1049,7 +1049,7 @@ static int32_t procorder(int64_t rnum, int32_t thnum, bool rnd, bool etc, bool t
 //          if (cnt_ == rnum_ || cnt_ % (rnum_ / 10) == 0) oprintf(" (%08lld)\n", (long long)cnt_);
 //        }
 //        return rv;
-        assert(("FIXME", 0));
+        assert(0);// FIXME
         return nullptr;
       }
       int64_t rnum_;
@@ -1112,7 +1112,7 @@ static int32_t procorder(int64_t rnum, int32_t thnum, bool rnd, bool etc, bool t
 //          if (cnt_ == rnum_ || cnt_ % (rnum_ / 10) == 0) oprintf(" (%08lld)\n", (long long)cnt_);
 //        }
 //        return rv;
-        assert(("FIXME", 0));
+        assert(0); //FIXME
         return nullptr;
       }
       int64_t rnum_;
@@ -1673,7 +1673,7 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
         //kc::DB::Cursor* cur = db_->cursor();
         int64_t range = rnum_ * thnum_ / 2;
         for (int64_t i = 1; !err_ && i <= rnum_; i++) {
-		  bool tran = false; // myrand(100) == 0; // TODO: disable transactions for now (SPAA 2014 ALE paper experience)
+//		  bool tran = false; // myrand(100) == 0; // TODO: disable transactions for now (SPAA 2014 ALE paper experience)
 //          if (tran) {
 //            if (myrand(2) == 0) {
 //              if (!db_->begin_transaction(myrand(rnum_) == 0)) {
@@ -2140,7 +2140,7 @@ static int32_t proctran(int64_t rnum, int32_t thnum, int32_t itnum,
               const char* visit_full(const char* kbuf, size_t ksiz,
                                      const char* vbuf, size_t vsiz, size_t* sp) {
                 if (myrand(200) == 0) return NOP;
-                assert(("TODO", 0));
+                assert(0); //TODO
                 //if (paradb_) paradb_->remove(kbuf, ksiz);
                 return REMOVE;
               }
@@ -2243,7 +2243,7 @@ static int32_t proctran(int64_t rnum, int32_t thnum, int32_t itnum,
 //          oputchar('.');
 //          if (cnt_ == rnum_ || cnt_ % (rnum_ / 10) == 0) oprintf(" (%08lld)\n", (long long)cnt_);
 //        }
-        assert(("FIXME", 0));
+        assert(0); // FIXME
         return NOP;
       }
       int64_t rnum_;

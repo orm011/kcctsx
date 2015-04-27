@@ -130,7 +130,7 @@ class CacheDB : public BasicDB {
       const char* rvbuf = dbuf + rksiz;
       size_t rvsiz = rec_->vsiz;
       char* zbuf = NULL;
-      size_t zsiz = 0;
+//      size_t zsiz = 0;
       assert(!db_->comp_);
 //      if (db_->comp_) {
 //        zbuf = db_->comp_->decompress(rvbuf, rvsiz, &zsiz);
