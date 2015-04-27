@@ -1944,6 +1944,7 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
             oputchar('.');
             if (i == rnum_ || i % (rnum_ / 10) == 0) oprintf(" (%08lld)\n", (long long)i);
           }
+          assert(!err_);
         }
        // delete cur;
       }
