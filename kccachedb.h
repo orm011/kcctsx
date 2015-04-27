@@ -435,6 +435,8 @@ class CacheDB : public BasicDB {
     int32_t sidx = hash % SLOTNUM;
     hash /= SLOTNUM;
     Slot* slot = slots_ + sidx;
+    //printf("thnum: %lu, sidx: %d\n", pthread_self(), sidx);
+
 #if LOCKING == 1
     slot->lock.lock();
 #endif
