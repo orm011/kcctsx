@@ -44,6 +44,7 @@ PCDIR = @libdir@/pkgconfig
 DESTDIR =
 
 # Building configuration
+METHOD=tm
 CC = @CC@
 CXX = @CXX@
 CPPFLAGS = @MYCPPFLAGS@ \
@@ -53,6 +54,25 @@ CPPFLAGS = @MYCPPFLAGS@ \
 CFLAGS = @MYCFLAGS@
 CXXFLAGS = @MYCXXFLAGS@
 LDFLAGS = @MYLDFLAGS@
+
+ifeq ($(METHOD),locks)
+	CPPFLAGS+=-D__transaction_atomic="" -DLOCKING=1
+else
+ifeq ($(METHOD),tm)
+	CPPFLAGS+=-DLOCKING=0
+	CXXFLAGS+=-fgnu-tm
+	LDFLAGS+=-litm
+else
+ifeq ($(METHOD),none)
+	CPPFLAGS+=-D__transaction_atomic="" -DLOCKING=0
+else
+	CPPFLAGS+="-fFAIL"
+endif
+endif
+endif
+
+
+
 CMDLDFLAGS = @MYCMDLDFLAGS@
 CMDLIBS = @MYCMDLIBS@
 LIBS = @LIBS@
@@ -81,6 +101,7 @@ POSTCMD = @MYPOSTCMD@
 # Actions
 #================================================================
 
+def: kccachetest
 
 all : $(LIBRARYFILES) $(COMMANDFILES)
 	@$(POSTCMD)
