@@ -1,0 +1,34 @@
+#! /bin/bash -u
+
+JEMALLOC="/usr/lib/x86_64-linux-gnu/libjemalloc.so.1"
+TCMALLOC="/usr/lib/libtcmalloc_minimal.so.4"
+export LD_LIBRARY_PATH=.
+export LD_PRELOAD="$TCMALLOC:/home/amatveev/GCC_libitm_memcached_version/libitm_memcached.so.1.0.0"
+export ITM_HTM_RESTARTS=1 
+export LD_LIBRARY_PATH=.
+
+OUT="results.cat"
+ALGOS="htm rh_htm_gl_wt locks none"
+REPS=7
+RNUM=3000000 #will get x 10 in database. with 3Mx10ops, expect lowest time be ~900ms longest 15s.
+
+for algo in $ALGOS; do
+
+    if [[ $algo == locks ]]; then
+	make clean && make METHOD=locks
+	THREADS=8
+    elif [[ $algo == none ]]; then
+	make clean && make METHOD=none
+	THREADS=1
+    else
+	make clean && make METHOD=tm
+	export ITM_DEFAULT_METHOD=$algo 
+	THREADS=8
+    fi
+    
+    for thds in $(seq $THREADS); do 
+    	for rep in $(seq $REPS); do 
+	    (taskset -c 0-7 ./kccachetest wicked -th $thds $RNUM; echo 'algo: ' $algo;) >> $OUT 
+	done
+    done 
+done
