@@ -1980,7 +1980,9 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
     oprintf("turns:%d\n", k_turns);
     oprintf("threads:%d\n", thnum);
     oprintf("slotnum:%d\n", db.SLOTNUM);
-    oprintf("time: %.3f\n", kc::time() - stime);
+    double time = kc::time() - stime;
+    oprintf("time: %.3f\n", );
+    oprintf("throughput: %.3f\n", rnum*k_turns/time);
 
     dbmetaprint(&db, itcnt == itnum);
     if (!db.close()) {
