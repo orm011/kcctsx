@@ -1976,15 +1976,19 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
       }
     }
 
-    oprintf("rnum: %d\n", rnum);
-    oprintf("turns: %d\n", k_turns);
+    oprintf("rnum:%d\n", rnum);
+    oprintf("turns:%d\n", k_turns);
+    oprintf("threads:%d\n", thnum);
+    oprintf("slotnum:%d\n", db.SLOTNUM);
+    oprintf("time: %.3f\n", kc::time() - stime);
+
     dbmetaprint(&db, itcnt == itnum);
     if (!db.close()) {
       dberrprint(&db, __LINE__, "DB::close");
       err = true;
     }
-    oprintf("time: %.3f\n", kc::time() - stime);
   }
+  assert(!err);
   oprintf("%s\n\n", err ? "error" : "ok");
   return err ? 1 : 0;
 }
