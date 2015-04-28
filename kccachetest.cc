@@ -1621,6 +1621,8 @@ static int32_t procqueue(int64_t rnum, int32_t thnum, int32_t itnum, bool rnd,
   return err ? 1 : 0;
 }
 
+const int k_turns = 10;
+
 
 // perform wicked command
 static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
@@ -1712,7 +1714,7 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
             vsiz = myrand(RECBUFSIZL) / (myrand(5) + 1);
           }
 
-          int turn = 10;
+          int turn = k_turns;
           do {
             switch (turn % 50) {
               case 0: {
@@ -1973,6 +1975,9 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
         if (threads[i].error()) err = true;
       }
     }
+
+    oprintf("rnum: %d\n", rnum);
+    oprintf("turns: %d\n", k_turns);
     dbmetaprint(&db, itcnt == itnum);
     if (!db.close()) {
       dberrprint(&db, __LINE__, "DB::close");
