@@ -1669,7 +1669,7 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
         return err_;
       }
       void run() {
-        printf("id: %d. rnum: %ld\n", id_, rnum_);
+        //printf("id: %d. rnum: %ld\n", id_, rnum_);
         //kc::DB::Cursor* cur = db_->cursor();
         int64_t range = rnum_ * thnum_ / 2;
         for (int64_t i = 1; !err_ && i <= rnum_; i++) {
@@ -1712,7 +1712,7 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
             vsiz = myrand(RECBUFSIZL) / (myrand(5) + 1);
           }
 
-          int turn = 100;
+          int turn = 10;
           do {
             switch (turn % 50) {
               case 0: {
@@ -1940,10 +1940,10 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
 //              err_ = true;
 //            }
 //          }
-          if (id_ < 1 && rnum_ > 250 && i % (rnum_ / 250) == 0) {
-            oputchar('.');
-            if (i == rnum_ || i % (rnum_ / 10) == 0) oprintf(" (%08lld)\n", (long long)i);
-          }
+//          if (id_ < 1 && rnum_ > 250 && i % (rnum_ / 250) == 0) {
+//            oputchar('.');
+//            if (i == rnum_ || i % (rnum_ / 10) == 0) oprintf(" (%08lld)\n", (long long)i);
+//          }
           assert(!err_);
         }
        // delete cur;
