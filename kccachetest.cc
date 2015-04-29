@@ -1649,7 +1649,6 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
   if (capsiz > 0) db.cap_size(capsiz);
   for (int32_t itcnt = 1; itcnt <= itnum; itcnt++) {
     if (itnum > 1) oprintf("iteration %d:\n", itcnt);
-    double stime = kc::time();
     uint32_t omode = kc::CacheDB::OWRITER | kc::CacheDB::OCREATE;
     if (itcnt == 1) omode |= kc::CacheDB::OTRUNCATE;
     if (!db.open("*", omode)) {
@@ -1969,26 +1968,32 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
     char lbuf[RECBUFSIZL];
     std::memset(lbuf, '*', sizeof(lbuf));
     ThreadWicked threads[THREADMAX];
-    if (false ) { //thnum < 2
-      threads[0].setparams(0, &db, rnum / thnum, thnum, lbuf);
-      threads[0].run();
-      if (threads[0].error()) err = true;
-    } else {
-      for (int32_t i = 0; i < thnum; i++) {
-        threads[i].setparams(i, &db, rnum / thnum, thnum, lbuf);
-        threads[i].start();
-      }
-      for (int32_t i = 0; i < thnum; i++) {
-        threads[i].join();
-        if (threads[i].error()) err = true;
-      }
+
+//    if (false ) { //thnum < 2
+//      threads[0].setparams(0, &db, rnum / thnum, thnum, lbuf);
+//      threads[0].run();
+//      if (threads[0].error()) err = true;
+    for (int32_t i = 0; i < thnum; i++) {
+      threads[i].setparams(i, &db, rnum / thnum, thnum, lbuf);
+    }
+
+    double stime = kc::time();
+    for (int32_t i = 0; i < thnum; i++) {
+      threads[i].start();
+    }
+    for (int32_t i = 0; i < thnum; i++) {
+      threads[i].join();
+    }
+    double time = kc::time() - stime;
+
+    for (int32_t i = 0; i < thnum; i++) {
+      assert(!threads[i].error());
     }
 
     oprintf("rnum:%d\n", rnum);
     oprintf("turns:%d\n", k_turns);
     oprintf("threads:%d\n", thnum);
     oprintf("slotnum:%d\n", db.SLOTNUM);
-    double time = kc::time() - stime;
     oprintf("time: %.3f\n", time);
     oprintf("throughput: %.3f\n", rnum*k_turns/time);
 
