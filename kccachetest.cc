@@ -62,6 +62,8 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
 static int32_t proctran(int64_t rnum, int32_t thnum, int32_t itnum,
                         int32_t opts, int64_t bnum, int64_t capcnt, int64_t capsiz, bool lv);
 
+static void procsanity();
+
 
 // main routine
 int main(int argc, char** argv) {
@@ -81,6 +83,8 @@ int main(int argc, char** argv) {
     rv = runwicked(argc, argv);
   } else if (!std::strcmp(argv[1], "tran")) {
     rv = runtran(argc, argv);
+  } else if (!std::strcmp(argv[1], "sanity")){
+    procsanity();
   } else {
     usage();
   }
@@ -1660,7 +1664,7 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
         thnum_ = thnum;
         lbuf_ = lbuf;
         err_ = false;
-        seedp_ = new int(id_);
+        seedp_ = new int(rand());
       }
 
       int myrand(int i){
@@ -1996,6 +2000,23 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
 }
 
 
+static void procsanity() {
+  kc::CacheDB db;
+  uint32_t omode = kc::CacheDB::OWRITER | kc::CacheDB::OCREATE;
+  assert(db.open("*", omode));
+
+  static const size_t maxsz = 1000;
+  const char key[] = "0123456789";
+  char val0[maxsz];
+  int res = db.get(key, sizeof(key), val0, sizeof(val0));
+  assert(res == -1);
+
+  db.add(key, sizeof(key), key, sizeof(key));
+  int res2 = db.get(key, sizeof(key), val0, sizeof(val0));
+  assert(res2 == sizeof(key));
+  assert(memcmp(key, val0, sizeof(key)) == 0);
+}
+
 // perform tran command
 static int32_t proctran(int64_t rnum, int32_t thnum, int32_t itnum,
                         int32_t opts, int64_t bnum, int64_t capcnt, int64_t capsiz, bool lv) {
@@ -2289,6 +2310,8 @@ static int32_t proctran(int64_t rnum, int32_t thnum, int32_t itnum,
   oprintf("%s\n\n", err ? "error" : "ok");
   return err ? 1 : 0;
 }
+
+
 
 
 

@@ -2107,8 +2107,8 @@ MYDOCUMENTFILES="COPYING FOSSEXCEPTION ChangeLog doc kyotocabinet.idl"
 MYPCFILES="kyotocabinet.pc"
 
 # Building flags
-MYCFLAGS="-Wall -ansi -pedantic -fPIC -fsigned-char -g0 -O2"
-MYCXXFLAGS="-std=c++11 -Wall -fPIC -fno-omit-frame-pointer -fsigned-char -g0 -O2"
+MYCFLAGS="-Wall -ansi -pedantic -fno-omit-frame-pointer -fPIC -fsigned-char -g -O2"
+MYCXXFLAGS="-std=c++11 -Wall -fPIC -fno-omit-frame-pointer -fsigned-char -g -O2"
 MYCPPFLAGS="-I. -I\$(INCLUDEDIR) -I/usr/local/include"
 MYCPPFLAGS="$MYCPPFLAGS -D_GNU_SOURCE=1" #-DNDEBUG
 MYCPPFLAGS="$MYCPPFLAGS -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__EXTENSIONS__"
@@ -4433,7 +4433,7 @@ if test "x$ac_cv_lib_kyotocabinet_main" = xyes; then :
 $as_echo "$as_me: WARNING: old version of Kyoto Cabinet was detected" >&2;}
 fi
 
-MYLDLIBPATH="$LD_LIBRARY_PATH"
+MYLDLIBPATH="$LD_LIBRARY_PATH:-r"
 
 # Necessary headers
 ac_fn_cxx_check_header_mongrel "$LINENO" "stdlib.h" "ac_cv_header_stdlib_h" "$ac_includes_default"
@@ -4536,6 +4536,7 @@ fi
 # As-needed linking
 if uname | grep Linux >config.tmp
 then
+  MYLDFLAGS="$MYLDFLAGS -Wl,-rpath,\$\$\ORIGIN"
   MYLDFLAGS="$MYLDFLAGS -Wl,-rpath-link,.:/usr/local/lib:$MYLDLIBPATH"
   MYLDFLAGS="$MYLDFLAGS -Wl,--as-needed"
 else
