@@ -2060,7 +2060,7 @@ static void sanity(kc::CacheDB& db, int id, int rnum) {
 }
 
 static void procsanity(int thnum, int rnum) {
-  kc::CacheDB db(1); //only one slot for correctness testing
+  kc::CacheDB db;
   uint32_t omode = kc::CacheDB::OWRITER | kc::CacheDB::OCREATE;
   assert(db.open("*", omode));
 
