@@ -2018,12 +2018,22 @@ static void sanity(kc::CacheDB& db, int id, int rnum) {
 
   for (int i = 0; i < rnum; ++i){
     char val0[maxsz];
+
+    //should get nothing
     assert(db.get(key.c_str(), key.size(), val0, sizeof(val0)) == -1);
+
+    //add should succeed
     db.add(key.c_str(), key.size(), key.c_str(), key.size());
+
+    // should read my write
     int res_raw = db.get(key.c_str(), key.size(), val0, sizeof(val0));
     assert (res_raw >= 0);
     assert((unsigned int)res_raw == key.size());
     assert(key == std::string(val0));
+
+    // delete
+    int res_del = db.remove(key.c_str(), key.size());
+    assert(res_del);
   }
 }
 
