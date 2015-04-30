@@ -16,6 +16,7 @@
 #include <kccachedb.h>
 #include "cmdcommon.h"
 
+#include <string>
 
 // global variables
 const char* g_progname;                  // program name
@@ -62,7 +63,7 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
 static int32_t proctran(int64_t rnum, int32_t thnum, int32_t itnum,
                         int32_t opts, int64_t bnum, int64_t capcnt, int64_t capsiz, bool lv);
 
-static void procsanity();
+static void procsanity(int, int);
 
 
 // main routine
@@ -84,7 +85,8 @@ int main(int argc, char** argv) {
   } else if (!std::strcmp(argv[1], "tran")) {
     rv = runtran(argc, argv);
   } else if (!std::strcmp(argv[1], "sanity")){
-    procsanity();
+    assert(argc == 4);
+    procsanity(atoi(argv[2]), atoi(argv[3]));
   } else {
     usage();
   }
@@ -1626,14 +1628,14 @@ static int32_t procqueue(int64_t rnum, int32_t thnum, int32_t itnum, bool rnd,
 }
 
 const int k_turns = 10;
-
+int x = 0;
 
 // perform wicked command
 static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
                           int32_t opts, int64_t bnum, int64_t capcnt, int64_t capsiz, bool lv) {
 
   //sanity check correctness before running the benchmark.
-  procsanity();
+  procsanity(thnum, rnum); //removed to debug some timing issue.
 
   oprintf("<Wicked Test>\n  seed=%u  rnum=%lld  thnum=%d  itnum=%d"
           "  opts=%d  bnum=%lld  capcnt=%lld  capsiz=%lld  lv=%d\n\n",
@@ -1966,7 +1968,7 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
       bool err_;
     };
     char lbuf[RECBUFSIZL];
-    std::memset(lbuf, '*', sizeof(lbuf));
+    std::memset(lbuf, '*', sizeof(lbuf)); // wth is this, it is being sharedb by all threads.
     ThreadWicked threads[THREADMAX];
 
 //    if (false ) { //thnum < 2
@@ -1984,7 +1986,7 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
     for (int32_t i = 0; i < thnum; i++) {
       threads[i].join();
     }
-    double time = kc::time() - stime;
+     double time = kc::time() - stime;
 
     for (int32_t i = 0; i < thnum; i++) {
       assert(!threads[i].error());
@@ -2009,21 +2011,61 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
 }
 
 
-static void procsanity() {
+static void sanity(kc::CacheDB& db, int id, int rnum) {
+
+  static const size_t maxsz = 1000;
+  std::string key(std::to_string(id) + "keynumber" + std::to_string(id));
+
+  for (int i = 0; i < rnum; ++i){
+    char val0[maxsz];
+    assert(db.get(key.c_str(), key.size(), val0, sizeof(val0)) == -1);
+    db.add(key.c_str(), key.size(), key.c_str(), key.size());
+    int res_raw = db.get(key.c_str(), key.size(), val0, sizeof(val0));
+    assert (res_raw >= 0);
+    assert((unsigned int)res_raw == key.size());
+    assert(key == std::string(val0));
+  }
+}
+
+static void procsanity(int thnum, int rnum) {
   kc::CacheDB db;
   uint32_t omode = kc::CacheDB::OWRITER | kc::CacheDB::OCREATE;
   assert(db.open("*", omode));
 
-  static const size_t maxsz = 1000;
-  const char key[] = "0123456789";
-  char val0[maxsz];
-  int res = db.get(key, sizeof(key), val0, sizeof(val0));
-  assert(res == -1);
+  class ThreadSanity : public kc::Thread {
+  public:
+    void setparams(kc::CacheDB *db, int id, int rnum){
+      db_ = db;
+      thid_ = id; 
+      rnum_ = rnum;
+    }
+    
+    void run() {
+      assert(db_ && rnum_);
+      sanity(*db_, thid_, rnum_);
+    }
 
-  db.add(key, sizeof(key), key, sizeof(key));
-  int res2 = db.get(key, sizeof(key), val0, sizeof(val0));
-  assert(res2 == sizeof(key));
-  assert(memcmp(key, val0, sizeof(key)) == 0);
+  private:
+    kc::CacheDB* db_ = nullptr;
+    int thid_ = 0;
+    int rnum_ = 0;
+  };
+
+  ThreadSanity threads[THREADMAX];
+
+  for (int32_t i = 0; i < thnum; i++) {
+    threads[i].setparams(&db, i, rnum);
+  }
+
+  for (int32_t i = 0; i < thnum; i++) {
+    threads[i].start();
+  }
+
+  for (int32_t i = 0; i < thnum; i++) {
+    threads[i].join();
+  }
+
+  assert(db.close());
 }
 
 // perform tran command
