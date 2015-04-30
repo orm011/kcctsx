@@ -1635,7 +1635,7 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
                           int32_t opts, int64_t bnum, int64_t capcnt, int64_t capsiz, bool lv) {
 
   //sanity check correctness before running the benchmark.
-  procsanity(thnum, rnum); //removed to debug some timing issue.
+  //procsanity(thnum, rnum); //removed to debug some timing issue.
 
   oprintf("<Wicked Test>\n  seed=%u  rnum=%lld  thnum=%d  itnum=%d"
           "  opts=%d  bnum=%lld  capcnt=%lld  capsiz=%lld  lv=%d\n\n",
