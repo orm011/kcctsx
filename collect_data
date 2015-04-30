@@ -15,16 +15,18 @@ RNUM=3000000 #will get x 10 in database. with 3Mx10ops, expect lowest time be ~9
 for algo in $ALGOS; do
 
     if [[ $algo == locks ]]; then
-	make clean && make METHOD=locks
+	make clean && make -j8 METHOD=locks
 	THREADS=8
     elif [[ $algo == none ]]; then
-	make clean && make METHOD=none
+	make clean && make -j8 METHOD=none
 	THREADS=1
     else
-	make clean && make METHOD=tm
+	make clean && make -j8 METHOD=tm
 	export ITM_DEFAULT_METHOD=$algo 
 	THREADS=8
     fi
+    
+    ./kccachetest sanity $THREADS 10000 || (echo 'failed sanity check!!!' &&  exit 1)
     
     for thds in $(seq $THREADS); do 
     	for rep in $(seq $REPS); do 
