@@ -50,7 +50,8 @@ class CacheDB : public BasicDB {
  public:
   class Cursor;
 
-  static const int32_t SLOTNUM = 256;
+  static const int32_t MAXSLOTS = 256;
+  const int32_t SLOTNUM;
  private:
   struct Record;
   struct TranLog;
@@ -144,14 +145,14 @@ class CacheDB : public BasicDB {
       const char* vbuf = visitor->visit_full(dbuf, rksiz, rvbuf, rvsiz, &vsiz);
       delete[] zbuf;
       if (vbuf == Visitor::REMOVE) {
-        uint64_t hash = db_->hash_record(dbuf, rksiz) / SLOTNUM;
+        uint64_t hash = db_->hash_record(dbuf, rksiz) / db_->SLOTNUM;
         Slot* slot = db_->slots_ + sidx_;
         Repeater repeater(Visitor::REMOVE, 0);
         db_->accept_impl(slot, hash, dbuf, rksiz, &repeater, db_->comp_, false);
       } else if (vbuf == Visitor::NOP) {
         if (step) step_impl();
       } else {
-        uint64_t hash = db_->hash_record(dbuf, rksiz) / SLOTNUM;
+        uint64_t hash = db_->hash_record(dbuf, rksiz) / db_->SLOTNUM;
         Slot* slot = db_->slots_ + sidx_;
         Repeater repeater(vbuf, vsiz);
         db_->accept_impl(slot, hash, dbuf, rksiz, &repeater, db_->comp_, false);
@@ -170,7 +171,7 @@ class CacheDB : public BasicDB {
         db_->set_error(_KCCODELINE_, Error::INVALID, "not opened");
         return false;
       }
-      for (int32_t i = 0; i < SLOTNUM; i++) {
+      for (int32_t i = 0; i < db_->SLOTNUM; i++) {
         Slot* slot = db_->slots_ + i;
         if (slot->first) {
           sidx_ = i;
@@ -198,8 +199,8 @@ class CacheDB : public BasicDB {
       }
       if (ksiz > KSIZMAX) ksiz = KSIZMAX;
       uint64_t hash = db_->hash_record(kbuf, ksiz);
-      int32_t sidx = hash % SLOTNUM;
-      hash /= SLOTNUM;
+      int32_t sidx = hash % db_->SLOTNUM;
+      hash /= db_->SLOTNUM;
       Slot* slot = db_->slots_ + sidx;
       size_t bidx = hash % slot->bnum;
       Record* rec = slot->buckets[bidx];
@@ -335,7 +336,7 @@ class CacheDB : public BasicDB {
       _assert_(true);
       rec_ = rec_->next;
       if (!rec_) {
-        for (int32_t i = sidx_ + 1; i < SLOTNUM; i++) {
+        for (int32_t i = sidx_ + 1; i < db_->SLOTNUM; i++) {
           Slot* slot = db_->slots_ + i;
           if (slot->first) {
             sidx_ = i;
@@ -379,8 +380,8 @@ class CacheDB : public BasicDB {
   /**
    * Default constructor.
    */
-  explicit CacheDB() :
-      mlock_(), flock_(), error_(), logger_(NULL), logkinds_(0), mtrigger_(NULL),
+  explicit CacheDB(int32_t slots = MAXSLOTS) :
+      SLOTNUM(slots), mlock_(), flock_(), error_(), logger_(NULL), logkinds_(0), mtrigger_(NULL),
       omode_(0), curs_(), path_(""), type_(TYPECACHE),
       opts_(0), bnum_(DEFBNUM), capcnt_(-1), capsiz_(-1),
       opaque_(), embcomp_(ZLIBRAWCOMP), comp_(NULL), slots_(), rttmode_(true), tran_(false) {
@@ -415,6 +416,7 @@ class CacheDB : public BasicDB {
    * performed in this function.
    */
   bool accept(const char* kbuf, size_t ksiz, Visitor* visitor, bool writable = true) {
+    //printf("slotnum: %d\n", SLOTNUM);
     assert(kbuf && ksiz <= MEMMAXSIZ && visitor);
 #if LOCKING != 1
     __transaction_atomic {
@@ -2133,7 +2135,7 @@ class CacheDB : public BasicDB {
   /** The data compressor. */
   Compressor* comp_;
   /** The slot tables. */
-  Slot slots_[SLOTNUM];
+  Slot slots_[MAXSLOTS];
   /** The flag whether in LRU rotation. */
   bool rttmode_;
   /** The flag whether in transaction. */
