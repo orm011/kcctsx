@@ -2013,8 +2013,10 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
 
 static void sanity(kc::CacheDB& db, int id, int rnum) {
 
+  using namespace std;
+
   static const size_t maxsz = 1000;
-  std::string key(std::to_string(id) + "keynumber" + std::to_string(id));
+  string key(to_string(id) + "keynumber" + to_string(id));
 
   for (int i = 0; i < rnum; ++i){
     char val0[maxsz];
@@ -2023,13 +2025,33 @@ static void sanity(kc::CacheDB& db, int id, int rnum) {
     assert(db.get(key.c_str(), key.size(), val0, sizeof(val0)) == -1);
 
     //add should succeed
-    db.add(key.c_str(), key.size(), key.c_str(), key.size());
+    auto firstval = key + "firstval";
+    assert(db.add(key.c_str(), key.size(), firstval.c_str(), firstval.size()));
 
     // should read my write
     int res_raw = db.get(key.c_str(), key.size(), val0, sizeof(val0));
     assert (res_raw >= 0);
-    assert((unsigned int)res_raw == key.size());
-    assert(key == std::string(val0));
+    assert((unsigned int)res_raw == firstval.size());
+    //cout << string(val0) << " " << firstval << endl;
+    assert(string(val0, res_raw) == firstval);
+
+    // repeated add returns false
+    assert(!db.add(key.c_str(), key.size(), firstval.c_str(), firstval.size()));
+
+    // should read my write still
+    res_raw = db.get(key.c_str(), key.size(), val0, sizeof(val0));
+    assert (res_raw >= 0);
+    assert((unsigned int)res_raw == firstval.size());
+    assert(string(val0, res_raw) == firstval);
+
+    auto secondval = key + "secondval";
+    assert(db.set(key, secondval));
+
+    // should read my  second write
+    res_raw = db.get(key.c_str(), key.size(), val0, sizeof(val0));
+    assert (res_raw >= 0);
+    assert((unsigned int)res_raw == secondval.size());
+    assert(string(val0, res_raw) == secondval);
 
     // delete
     int res_del = db.remove(key.c_str(), key.size());
