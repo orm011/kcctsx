@@ -1681,7 +1681,7 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
       }
       void run() {
         //printf("id: %d. rnum: %ld\n", id_, rnum_);
-        //kc::DB::Cursor* cur = db_->cursor();
+        kc::DB::Cursor* cur = db_->cursor();
         int64_t range = rnum_ * thnum_ / 2;
         for (int64_t i = 1; !err_ && i <= rnum_; i++) {
 //		  bool tran = false; // myrand(100) == 0; // TODO: disable transactions for now (SPAA 2014 ALE paper experience)
@@ -1812,49 +1812,53 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
 //                }
 //                break;
 //              }
-//              case 8: //{
-//                if (myrand(10) == 0) {
-//                  if (!cur->jump(kbuf, ksiz) &&
-//                      db_->error() != kc::BasicDB::Error::NOREC) {
-//                    dberrprint(db_, __LINE__, "Cursor::jump");
-//                    err_ = true;
-//                  }
-//                } else {
-//                  class VisitorImpl : public kc::DB::Visitor {
-//                   public:
-//                    explicit VisitorImpl(const char* lbuf) : lbuf_(lbuf) {}
-//                   private:
-//                    const char* visit_full(const char* kbuf, size_t ksiz,
-//                                           const char* vbuf, size_t vsiz, size_t* sp) {
-//                      const char* rv = NOP;
-//                      switch (myrand(3)) {
-//                        case 0: {
-//                          rv = lbuf_;
-//                          *sp = myrand(RECBUFSIZL) / (myrand(5) + 1);
-//                          break;
-//                        }
-//                        case 1: {
-//                          rv = REMOVE;
-//                          break;
-//                        }
-//                      }
-//                      return rv;
-//                    }
-//                    const char* lbuf_;
-//                  } visitor(lbuf_);
-//                  if (!cur->accept(&visitor, true, myrand(2) == 0) &&
-//                      db_->error() != kc::BasicDB::Error::NOREC) {
-//                    dberrprint(db_, __LINE__, "Cursor::accept");
-//                    err_ = true;
-//                  }
-//                  if (myrand(5) > 0 && !cur->step() &&
-//                      db_->error() != kc::BasicDB::Error::NOREC) {
-//                    dberrprint(db_, __LINE__, "Cursor::step");
-//                    err_ = true;
-//                  }
-//                }
-//                break;
-//              }
+              case 8: {
+                if (myrand(10) == 0) {
+                  if (!cur->jump(kbuf, ksiz) &&
+                      db_->error() != kc::BasicDB::Error::NOREC) {
+                    dberrprint(db_, __LINE__, "Cursor::jump");
+                    err_ = true;
+                  }
+                } else {
+                  class VisitorImpl : public kc::DB::Visitor {
+                   public:
+                    explicit VisitorImpl(const char* lbuf, ThreadWicked *th) :
+                      lbuf_(lbuf), myrand3(th->myrand(3)), myrandrecbuf(th->myrand(RECBUFSIZL)), myrand5(th->myrand(5)) {}
+                   private:
+                    const char* visit_full(const char* kbuf, size_t ksiz,
+                                           const char* vbuf, size_t vsiz, size_t* sp) {
+                      const char* rv = NOP;
+                      switch (myrand3) {
+                        case 0: {
+                          rv = lbuf_;
+                          *sp = myrandrecbuf/ (myrand5 + 1);
+                          break;
+                        }
+                        case 1: {
+                          rv = REMOVE;
+                          break;
+                        }
+                      }
+                      return rv;
+                    }
+                    const char* lbuf_;
+                    int myrand3 = 0;
+                    int myrandrecbuf = 0;
+                    int myrand5 = 0;
+                  } visitor(lbuf_, this);
+                  if (!cur->accept(&visitor, true, myrand(2) == 0) &&
+                      db_->error() != kc::BasicDB::Error::NOREC) {
+                    dberrprint(db_, __LINE__, "Cursor::accept");
+                    err_ = true;
+                  }
+                  if (myrand(5) > 0 && !cur->step() &&
+                      db_->error() != kc::BasicDB::Error::NOREC) {
+                    dberrprint(db_, __LINE__, "Cursor::step");
+                    err_ = true;
+                  }
+                }
+                break;
+              }
               default: {
                 size_t rsiz;
                 char* rbuf = db_->get(kbuf, ksiz, &rsiz);

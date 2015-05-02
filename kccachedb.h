@@ -49,9 +49,10 @@ class CacheDB : public BasicDB {
   friend class PlantDB<CacheDB, BasicDB::TYPEGRASS>;
  public:
   class Cursor;
-
+  class CursorListSafe;
   static const int32_t SLOTNUM = 256;
  private:
+
   struct Record;
   struct TranLog;
   struct Slot;
@@ -60,7 +61,8 @@ class CacheDB : public BasicDB {
   class Remover;
   class ScopedVisitor;
   /** An alias of list of cursors. */
-  typedef std::list<Cursor*> CursorList;
+  //typedef std::list<Cursor*> CursorList;
+  typedef CursorListSafe CursorList;
   /** An alias of list of transaction logs. */
   typedef std::list<TranLog> TranLogList;
   /** The number of slot tables. */
@@ -76,7 +78,87 @@ class CacheDB : public BasicDB {
   static const size_t OPAQUESIZ = 16;
   /** The threshold of busy loop and sleep for locking. */
   static const uint32_t LOCKBUSYLOOP = 8192;
+  /**  Max cursors allowed at any given time **/
+  static const uint32_t MAXCURS = 16; // ok
  public:
+
+  class CursorListSafe {
+
+  public:
+    CursorListSafe() {
+      for (size_t i = 0; i < MAXCURS; ++i){
+        curs_[i] = nullptr;
+      }
+    }
+
+    /* pre: never push back same thing more than once */
+    void push_back(Cursor *c) {
+      ++size_;
+      unsigned int i = 0;
+      for (; i < MAXCURS && curs_[i]; ++i) {}
+
+      if (i < MAXCURS) {
+        curs_[i] = c;
+      } else {
+        assert(false); // too many cursors at the same time.
+      }
+    }
+
+     /* pre: must exist exactly once */
+    void remove(Cursor *c) {
+      size_--;
+      unsigned int i =0;
+      for (; i < MAXCURS && curs_[i] != c; ++i){}
+
+      if (i < MAXCURS) {
+        curs_[i] = nullptr;
+      } else {
+        assert(false); // pre: cursor must exist.
+      }
+    }
+
+    typedef Cursor** iterator;
+    typedef Cursor * const * const_iterator;
+
+    iterator begin() {
+      return curs_;
+    }
+
+    iterator end() {
+      return curs_ + MAXCURS;
+    }
+
+//    const_iterator cbegin() const {
+//      return cur;
+//    }
+//
+//    const_iterator cend() const {
+//      return curs_ + MAXCURS;
+//    }
+
+    size_t empty() const {
+      return size_ == 0;
+    }
+
+    void checkRep() const {
+
+      std::unordered_set<Cursor *> checker;
+      for (size_t i = 0; i < sizeof(curs_); ++i) {
+        if (curs_[i] != 0) {
+          assert(checker.count(curs_[i]) == 0);
+          checker.emplace(curs_[i]);
+        }
+      }
+
+      assert(checker.size() == size_);
+    }
+
+  private:
+
+    Cursor * curs_[MAXCURS];
+    size_t size_ {0};
+  };
+
   /**
    * Cursor to indicate a record.
    */
@@ -112,7 +194,6 @@ class CacheDB : public BasicDB {
      * be performed in this function.
      */
     bool accept(Visitor* visitor, bool writable = true, bool step = false) {
-      assert(0);
       ScopedRWLock lock(&db_->mlock_, true);
       if (db_->omode_ == 0) {
         db_->set_error(_KCCODELINE_, Error::INVALID, "not opened");
@@ -398,7 +479,10 @@ class CacheDB : public BasicDB {
       CursorList::const_iterator citend = curs_.end();
       while (cit != citend) {
         Cursor* cur = *cit;
-        cur->db_ = NULL;
+        if (cur != nullptr) {
+          cur->db_ = NULL;
+        }
+
         ++cit;
       }
     }
@@ -1055,7 +1139,6 @@ class CacheDB : public BasicDB {
    * released with the delete operator when it is no longer in use.
    */
   Cursor* cursor() {
-    assert(false);
     return new Cursor(this);
   }
   /**
@@ -1514,7 +1597,7 @@ class CacheDB : public BasicDB {
    * Record data.
    */
   struct Record {
-    uint32_t ksiz;                       ///< size of the key
+    uint32_t ksiz;                       ///< size of the key. (top 12 bits are actually a cached-hash, lower 20 bits are the size)
     uint32_t vsiz;                       ///< size of the value
     Record* left;                        ///< left child record
     Record* right;                       ///< right child record
@@ -1679,6 +1762,7 @@ class CacheDB : public BasicDB {
     slot->repcheck();
     Record* rec = slot->buckets[bidx];
     Record** entp = slot->buckets + bidx;
+    assert(*entp == rec);
     uint32_t fhash = fold_hash(hash) & ~KSIZMAX;
     while (rec) {
       uint32_t rhash = rec->ksiz & ~KSIZMAX;
@@ -2058,7 +2142,7 @@ class CacheDB : public BasicDB {
     CursorList::const_iterator citend = curs_.end();
     while (cit != citend) {
       Cursor* cur = *cit;
-      if (cur->rec_ == rec) cur->step_impl();
+      if (cur != nullptr && cur->rec_ == rec) cur->step_impl();
       ++cit;
     }
   }
@@ -2075,7 +2159,7 @@ class CacheDB : public BasicDB {
     CursorList::const_iterator citend = curs_.end();
     while (cit != citend) {
       Cursor* cur = *cit;
-      if (cur->rec_ == orec) cur->rec_ = nrec;
+      if (cur != nullptr && cur->rec_ == orec) cur->rec_ = nrec;
       ++cit;
     }
   }
@@ -2089,8 +2173,10 @@ class CacheDB : public BasicDB {
     CursorList::const_iterator citend = curs_.end();
     while (cit != citend) {
       Cursor* cur = *cit;
-      cur->sidx_ = -1;
-      cur->rec_ = NULL;
+      if (cur != nullptr) {
+       cur->sidx_ = -1;
+       cur->rec_ = NULL;
+      }
       ++cit;
     }
   }
