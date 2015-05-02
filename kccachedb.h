@@ -163,17 +163,29 @@ class CacheDB : public BasicDB {
      */
     explicit Cursor(CacheDB* db) : db_(db), sidx_(-1), rec_(NULL) {
       _assert_(db);
+#if LOCKING != 1
+    __transaction_atomic
+#else
       ScopedRWLock lock(&db_->mlock_, true);
+#endif
+      {
       db_->curs_.push_back(this);
     }
+      }
     /**
      * Destructor.
      */
     virtual ~Cursor() {
       _assert_(true);
       if (!db_) return;
+#if LOCKING != 1
+    __transaction_atomic
+#else
       ScopedRWLock lock(&db_->mlock_, true);
+#endif
+    {
       db_->curs_.remove(this);
+    }
     }
     /**
      * Accept a visitor to the current record.
@@ -186,7 +198,12 @@ class CacheDB : public BasicDB {
      * be performed in this function.
      */
     bool accept(Visitor* visitor, bool writable = true, bool step = false) {
+#if LOCKING != 1
+    __transaction_atomic
+#else
       ScopedRWLock lock(&db_->mlock_, true);
+#endif
+    {
       if (db_->omode_ == 0) {
         db_->set_error(_KCCODELINE_, Error::INVALID, "not opened");
         return false;
@@ -231,6 +248,7 @@ class CacheDB : public BasicDB {
         if (step) step_impl();
       }
       return true;
+      }
     }
     /**
      * Jump the cursor to the first record for forward scan.
@@ -238,7 +256,12 @@ class CacheDB : public BasicDB {
      */
     bool jump() {
       _assert_(true);
+#if LOCKING != 1
+    __transaction_atomic
+#else
       ScopedRWLock lock(&db_->mlock_, true);
+#endif
+    {
       if (db_->omode_ == 0) {
         db_->set_error(_KCCODELINE_, Error::INVALID, "not opened");
         return false;
@@ -256,6 +279,7 @@ class CacheDB : public BasicDB {
       rec_ = NULL;
       return false;
     }
+    }
     /**
      * Jump the cursor to a record for forward scan.
      * @param kbuf the pointer to the key region.
@@ -264,7 +288,12 @@ class CacheDB : public BasicDB {
      */
     bool jump(const char* kbuf, size_t ksiz) {
       _assert_(kbuf && ksiz <= MEMMAXSIZ);
+#if LOCKING != 1
+    __transaction_atomic
+#else
       ScopedRWLock lock(&db_->mlock_, true);
+#endif
+    {
       if (db_->omode_ == 0) {
         db_->set_error(_KCCODELINE_, Error::INVALID, "not opened");
         return false;
@@ -308,6 +337,7 @@ class CacheDB : public BasicDB {
       rec_ = NULL;
       return false;
     }
+    }
     /**
      * Jump the cursor to a record for forward scan.
      * @note Equal to the original Cursor::jump method except that the parameter is std::string.
@@ -322,13 +352,19 @@ class CacheDB : public BasicDB {
      */
     bool jump_back() {
       _assert_(true);
+#if LOCKING != 1
+    __transaction_atomic
+#else
       ScopedRWLock lock(&db_->mlock_, true);
+#endif
+    {
       if (db_->omode_ == 0) {
         db_->set_error(_KCCODELINE_, Error::INVALID, "not opened");
         return false;
       }
       db_->set_error(_KCCODELINE_, Error::NOIMPL, "not implemented");
       return false;
+    }
     }
     /**
      * Jump the cursor to a record for backward scan.
@@ -336,13 +372,19 @@ class CacheDB : public BasicDB {
      */
     bool jump_back(const char* kbuf, size_t ksiz) {
       _assert_(kbuf && ksiz <= MEMMAXSIZ);
+#if LOCKING != 1
+    __transaction_atomic
+#else
       ScopedRWLock lock(&db_->mlock_, true);
+#endif
+    {
       if (db_->omode_ == 0) {
         db_->set_error(_KCCODELINE_, Error::INVALID, "not opened");
         return false;
       }
       db_->set_error(_KCCODELINE_, Error::NOIMPL, "not implemented");
       return false;
+    }
     }
     /**
      * Jump the cursor to a record for backward scan.
@@ -350,7 +392,12 @@ class CacheDB : public BasicDB {
      */
     bool jump_back(const std::string& key) {
       _assert_(true);
+#if LOCKING != 1
+    __transaction_atomic
+#else
       ScopedRWLock lock(&db_->mlock_, true);
+#endif
+    {
       if (db_->omode_ == 0) {
         db_->set_error(_KCCODELINE_, Error::INVALID, "not opened");
         return false;
@@ -358,13 +405,19 @@ class CacheDB : public BasicDB {
       db_->set_error(_KCCODELINE_, Error::NOIMPL, "not implemented");
       return false;
     }
+    }
     /**
      * Step the cursor to the next record.
      * @return true on success, or false on failure.
      */
     bool step() {
       _assert_(true);
+#if LOCKING != 1
+    __transaction_atomic
+#else
       ScopedRWLock lock(&db_->mlock_, true);
+#endif
+    {
       if (db_->omode_ == 0) {
         db_->set_error(_KCCODELINE_, Error::INVALID, "not opened");
         return false;
@@ -376,21 +429,26 @@ class CacheDB : public BasicDB {
       bool err = false;
       if (!step_impl()) err = true;
       return !err;
-    }
+    }}
     /**
      * Step the cursor to the previous record.
      * @note This is a dummy implementation for compatibility.
      */
     bool step_back() {
       _assert_(true);
+#if LOCKING != 1
+    __transaction_atomic
+#else
       ScopedRWLock lock(&db_->mlock_, true);
+#endif
+    {
       if (db_->omode_ == 0) {
         db_->set_error(_KCCODELINE_, Error::INVALID, "not opened");
         return false;
       }
       db_->set_error(_KCCODELINE_, Error::NOIMPL, "not implemented");
       return false;
-    }
+    }}
     /**
      * Get the database object.
      * @return the database object.
@@ -493,10 +551,11 @@ class CacheDB : public BasicDB {
   bool accept(const char* kbuf, size_t ksiz, Visitor* visitor, bool writable = true) {
     assert(kbuf && ksiz <= MEMMAXSIZ && visitor);
 #if LOCKING != 1
-    __transaction_atomic {
+    __transaction_atomic
 #else
     ScopedRWLock lock(&mlock_, false);
 #endif
+    {
     if (omode_ == 0) {
       assert(0);
       set_error(_KCCODELINE_, Error::INVALID, "not opened");
