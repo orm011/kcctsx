@@ -1542,7 +1542,7 @@ class BasicDB : public DB {
     VisitorImpl visitor(vbuf, vsiz);
     if (!accept(kbuf, ksiz, &visitor, true)) return false;
     if (!visitor.ok()) {
-      set_error(_KCCODELINE_, Error::DUPREC, "record duplication");
+//      set_error(_KCCODELINE_, Error::DUPREC, "record duplication");
       return false;
     }
     return true;
@@ -1994,7 +1994,7 @@ class BasicDB : public DB {
     size_t vsiz;
     char* vbuf = visitor.pop(&vsiz);
     if (!vbuf) {
-      set_error(_KCCODELINE_, Error::NOREC, "no record");
+      //set_error(_KCCODELINE_, Error::NOREC, "no record");//don't want to assert just because a record isnt' there
       *sp = 0;
       return NULL;
     }
@@ -2067,7 +2067,7 @@ class BasicDB : public DB {
     if (!accept(kbuf, ksiz, &visitor, false)) return -1;
     int32_t vsiz = visitor.vsiz();
     if (vsiz < 0) {
-      set_error(_KCCODELINE_, Error::NOREC, "no record");
+      //set_error(_KCCODELINE_, Error::NOREC, "no record");
       return -1;
     }
     return vsiz;

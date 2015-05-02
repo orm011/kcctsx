@@ -811,7 +811,8 @@ class CacheDB : public BasicDB {
                  Error::Code code, const char* message) {
     _assert_(file && line > 0 && func && message);
     auto err = Error(code, message);
-    printf("Error: code: %s  message: %s\n", err.name(), err.message());
+    printf("Error at %s:%d %s(): (%s) %s\n",
+        file, line, func,err.name(), err.message());
     fflush(stdout);
     assert(false); // error happened
 //    error_->set(code, message);
