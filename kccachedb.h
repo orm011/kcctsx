@@ -128,14 +128,6 @@ class CacheDB : public BasicDB {
       return curs_ + MAXCURS;
     }
 
-//    const_iterator cbegin() const {
-//      return cur;
-//    }
-//
-//    const_iterator cend() const {
-//      return curs_ + MAXCURS;
-//    }
-
     size_t empty() const {
       return size_ == 0;
     }
