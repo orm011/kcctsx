@@ -579,9 +579,8 @@ class CacheDB : public BasicDB {
     accept_impl(slot, hash, kbuf, ksiz, visitor, comp_, rttmode_);
 #if LOCKING == 1
     slot->lock.unlock();
-#else
-    }
 #endif
+    }
     return true;
   }
   /**
