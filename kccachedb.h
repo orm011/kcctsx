@@ -507,12 +507,12 @@ class CacheDB : public BasicDB {
 #endif
     if (omode_ == 0) {
       assert(0);
-      //set_error(_KCCODELINE_, Error::INVALID, "not opened");
+      set_error(_KCCODELINE_, Error::INVALID, "not opened");
       return false;
     }
     if (writable && !(omode_ & OWRITER)) {
       assert(0);
-      //set_error(_KCCODELINE_, Error::NOPERM, "permission denied");
+      set_error(_KCCODELINE_, Error::NOPERM, "permission denied");
       return false;
     }
     if (ksiz > KSIZMAX) ksiz = KSIZMAX;
@@ -807,16 +807,20 @@ class CacheDB : public BasicDB {
    * @param code an error code.
    * @param message a supplement message.
    */
-  void set_error(const char* file, int32_t line, const char* func,
+  void __attribute__((transaction_pure)) set_error(const char* file, int32_t line, const char* func,
                  Error::Code code, const char* message) {
     _assert_(file && line > 0 && func && message);
-    error_->set(code, message);
-    if (logger_) {
-      Logger::Kind kind = code == Error::BROKEN || code == Error::SYSTEM ?
-          Logger::ERROR : Logger::INFO;
-      if (kind & logkinds_)
-        report(file, line, func, kind, "%d: %s: %s", code, Error::codename(code), message);
-    }
+    auto err = Error(code, message);
+    printf("Error: code: %s  message: %s\n", err.name(), err.message());
+    fflush(stdout);
+    assert(false); // error happened
+//    error_->set(code, message);
+//    if (logger_) {
+//      Logger::Kind kind = code == Error::BROKEN || code == Error::SYSTEM ?
+//          Logger::ERROR : Logger::INFO;
+//      if (kind & logkinds_)
+//        report(file, line, func, kind, "%d: %s: %s", code, Error::codename(code), message);
+//    }
   }
   /**
    * Open a database file.

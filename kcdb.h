@@ -1243,8 +1243,9 @@ class BasicDB : public DB {
    * @param code an error code.
    * @param message a supplement message.
    */
-  virtual void set_error(const char* file, int32_t line, const char* func,
-                         Error::Code code, const char* message) = 0;
+  virtual void __attribute__((transaction_pure)) // we will assert
+  set_error(const char* file, int32_t line, const char* func,
+      Error::Code code, const char* message) = 0;
   /**
    * Open a database file.
    * @param path the path of a database file.
