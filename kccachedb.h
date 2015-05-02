@@ -1755,8 +1755,16 @@ class CacheDB : public BasicDB {
    * @param comp the data compressor.
    * @param rtt whether to move the record to the last.
    */
-  void __attribute__((transaction_safe)) accept_impl(Slot* slot, uint64_t hash, const char* kbuf, size_t ksiz, Visitor* visitor,
-                   Compressor* comp, bool rtt) {
+  void __attribute__((transaction_safe))
+  accept_impl(
+      Slot* slot,
+      uint64_t hash,
+      const char* kbuf,
+      size_t ksiz,
+      Visitor* visitor,
+      Compressor* comp,
+      bool rtt)
+  {
     _assert_(slot && kbuf && ksiz <= MEMMAXSIZ && visitor);
     size_t bidx = hash % slot->bnum;
     slot->repcheck();
