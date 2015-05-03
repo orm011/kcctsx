@@ -1679,6 +1679,12 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
       bool error() {
         return err_;
       }
+
+      ~ThreadWicked() {
+        delete seedp_;
+      }
+
+
       void run() {
         //printf("id: %d. rnum: %ld\n", id_, rnum_);
         kc::DB::Cursor* cur = db_->cursor();
