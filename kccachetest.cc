@@ -1684,6 +1684,7 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
         kc::DB::Cursor* cur = db_->cursor();
         int64_t range = rnum_ * thnum_ / 2;
         for (int64_t i = 1; !err_ && i <= rnum_; i++) {
+        // 1/100th of the time, do a transaction.
 //		  bool tran = false; // myrand(100) == 0; // TODO: disable transactions for now (SPAA 2014 ALE paper experience)
 //          if (tran) {
 //            if (myrand(2) == 0) {
@@ -1702,26 +1703,28 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
 //              }
 //            }
 //          }
+
+          // key is randomly generated in the range 0 -> (rnum_ * thnum_ / 2)
           char kbuf[RECBUFSIZ];
-          size_t ksiz = std::sprintf(kbuf, "%lld", (long long)(myrand(range) + 1));
-          if (myrand(1000) == 0) {
-            ksiz = myrand(RECBUFSIZ) + 1;
-            if (myrand(2) == 0) {
-              for (size_t j = 0; j < ksiz; j++) {
-                kbuf[j] = j;
-              }
-            } else {
-              for (size_t j = 0; j < ksiz; j++) {
-                kbuf[j] = myrand(256);
-              }
-            }
-          }
+          size_t ksiz = std::sprintf(kbuf, "%lld", (long long)(myrand(range) + 1));  // ie random. size of such an int will be about 20 chars.
+//          if (myrand(1000) == 0) {
+//            ksiz = myrand(RECBUFSIZ) + 1;
+//            if (myrand(2) == 0) {
+//              for (size_t j = 0; j < ksiz; j++) {  // 1/1000 * 1/2 of the time, we get 1,2,3,4...64 as the key (ie, not random, long.).
+//                kbuf[j] = j;
+//              }
+//            } else {
+//              for (size_t j = 0; j < ksiz; j++) {  // 1/1000 * 1/2 of the time, we get rand,rand,rand,... (64 times) as the key. ie, long.
+//                kbuf[j] = myrand(256);
+//              }
+//            }
+//          }
           const char* vbuf = kbuf;
           size_t vsiz = ksiz;
-          if (myrand(10) == 0) {
-            vbuf = lbuf_;
-            vsiz = myrand(RECBUFSIZL) / (myrand(5) + 1);
-          }
+//          if (myrand(10) == 0) { // 1/10th of the time, we will use lbuf_ as the val, with a random size, a
+//            vbuf = lbuf_;
+//            vsiz = myrand(RECBUFSIZL) / (myrand(5) + 1);
+//          }
 
           int turn = k_turns;
           do {
