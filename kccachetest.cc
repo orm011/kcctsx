@@ -1964,7 +1964,7 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
 //          }
           assert(!err_);
         }
-       // delete cur;
+       delete cur;
       }
      private:
       int32_t id_;
