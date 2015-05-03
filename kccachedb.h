@@ -516,6 +516,7 @@ class CacheDB : public BasicDB {
       opts_(0), bnum_(DEFBNUM), capcnt_(-1), capsiz_(-1),
       opaque_(), embcomp_(ZLIBRAWCOMP), comp_(NULL), slots_(), rttmode_(true), tran_(false) {
     _assert_(true);
+    assert(!this->error());
   }
   /**
    * Destructor.
@@ -857,15 +858,19 @@ class CacheDB : public BasicDB {
    * @param code an error code.
    * @param message a supplement message.
    */
-  void __attribute__((transaction_pure)) set_error(const char* file, int32_t line, const char* func,
+  void __attribute__((transaction_safe)) set_error(const char* file, int32_t line, const char* func,
                  Error::Code code, const char* message) {
     _assert_(file && line > 0 && func && message);
-    auto err = Error(code, message);
-    printf("Error at %s:%d %s(): (%s) %s\n",
-        file, line, func,err.name(), err.message());
-    fflush(stdout);
-    assert(false); // error happened
-//    error_->set(code, message);
+    switch (code) {
+    case Error::Code::NOREC:
+    case Error::Code::SUCCESS:
+    case Error::Code::DUPREC:
+        break;
+    default:
+      assert(false); // all others considered harmful right now.
+    }
+
+    error_->set(code, message);
 //    if (logger_) {
 //      Logger::Kind kind = code == Error::BROKEN || code == Error::SYSTEM ?
 //          Logger::ERROR : Logger::INFO;

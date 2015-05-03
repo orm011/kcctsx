@@ -1021,7 +1021,7 @@ class BasicDB : public DB {
      * @param code an error code.
      * @param message a supplement message.
      */
-    void set(Code code, const char* message) {
+    void __attribute__((transaction_safe)) set(Code code, const char* message) {
       _assert_(message);
       code_ = code;
       message_ = message;
@@ -1243,7 +1243,7 @@ class BasicDB : public DB {
    * @param code an error code.
    * @param message a supplement message.
    */
-  virtual void __attribute__((transaction_pure)) // we will assert
+  virtual void __attribute__((transaction_safe))
   set_error(const char* file, int32_t line, const char* func,
       Error::Code code, const char* message) = 0;
   /**
@@ -1994,7 +1994,7 @@ class BasicDB : public DB {
     size_t vsiz;
     char* vbuf = visitor.pop(&vsiz);
     if (!vbuf) {
-      //set_error(_KCCODELINE_, Error::NOREC, "no record");//don't want to assert just because a record isnt' there
+      set_error(_KCCODELINE_, Error::NOREC, "no record");//don't want to assert just because a record isnt' there
       *sp = 0;
       return NULL;
     }

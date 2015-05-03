@@ -2028,7 +2028,8 @@ void TSDKey::set(void* ptr) {
   _assert_(true);
   ::pthread_key_t* key = (::pthread_key_t*)opq_;
   if (::pthread_setspecific(*key, ptr) != 0)
-    throw std::runtime_error("pthread_setspecific");
+      assert(false);
+    //throw std::runtime_error("pthread_setspecific");
 #endif
 }
 
@@ -2036,7 +2037,7 @@ void TSDKey::set(void* ptr) {
 /**
  * Get the value.
  */
-void* TSDKey::get() const {
+void* __attribute__((transaction_safe)) TSDKey::get() const {
 #if defined(_SYS_MSVC_) || defined(_SYS_MINGW_)
   _assert_(true);
   ::DWORD key = (::DWORD)opq_;

@@ -19,6 +19,11 @@
 #include <kccommon.h>
 #include <kcutil.h>
 
+extern __attribute__((transaction_pure)) void *pthread_getspecific (pthread_key_t __key) __THROW;
+extern __attribute__((transaction_pure)) int pthread_setspecific (pthread_key_t __key, const void *__pointer) __THROW;
+extern __attribute__((transaction_pure)) void __assert_fail (const char *__assertion, const char *__file,
+          unsigned int __line, const char *__function) __THROW __attribute__ ((__noreturn__));
+
 namespace kyotocabinet {                 // common namespace
 
 
@@ -837,12 +842,12 @@ class TSDKey {
    * Set the value.
    * @param ptr an arbitrary pointer.
    */
-  void set(void* ptr);
+  void __attribute__((transaction_safe))  set(void* ptr);
   /**
    * Get the value.
    * @return the value.
    */
-  void* get() const ;
+  void* __attribute__((transaction_safe)) get() const ;
  private:
   /** Opaque pointer. */
   void* opq_;
@@ -889,7 +894,7 @@ class TSD {
    * Member reference operator.
    * @return the pointer to the inner object.
    */
-  TYPE* operator ->() {
+  TYPE* __attribute__((transaction_safe)) operator ->() {
     _assert_(true);
     TYPE* obj = (TYPE*)key_.get();
     if (!obj) {
