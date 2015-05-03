@@ -861,14 +861,14 @@ class CacheDB : public BasicDB {
   void __attribute__((transaction_safe)) set_error(const char* file, int32_t line, const char* func,
                  Error::Code code, const char* message) {
     _assert_(file && line > 0 && func && message);
-    switch (code) {
-    case Error::Code::NOREC:
-    case Error::Code::SUCCESS:
-    case Error::Code::DUPREC:
-        break;
-    default:
-      assert(false); // all others considered harmful right now.
-    }
+//    switch (code) {
+//    case Error::Code::NOREC:
+//    case Error::Code::SUCCESS:
+//    case Error::Code::DUPREC:
+//        break;
+//    default:
+//      assert(false); // all others considered harmful right now.
+//    }
 
     error_->set(code, message);
 //    if (logger_) {
