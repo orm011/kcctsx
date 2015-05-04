@@ -2,10 +2,9 @@
 
 JEMALLOC="/usr/lib/x86_64-linux-gnu/libjemalloc.so.1"
 TCMALLOC="/usr/lib/libtcmalloc_minimal.so.4"
-export LD_LIBRARY_PATH=.
-export LD_PRELOAD="$TCMALLOC:/home/amatveev/GCC_libitm_memcached_version/libitm_memcached.so.1.0.0"
+LIBITM="/home/amatveev/GCC_libitm_memcached_version/libitm_memcached.so.1.0.0"
+export LD_PRELOAD="$TCMALLOC:$LIBITM"
 export ITM_HTM_RESTARTS=1 
-export LD_LIBRARY_PATH=.
 
 OUT="results.cat"
 ALGOS="htm rh_htm_gl_wt locks none"
