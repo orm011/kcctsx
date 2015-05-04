@@ -794,7 +794,7 @@ class BasicDB : public DB {
       _assert_(ksp && vbp && vsp);
       class VisitorImpl : public Visitor {
        public:
-        explicit VisitorImpl() : kbuf_(NULL), ksiz_(0), vbuf_(NULL), vsiz_(0) {}
+        explicit VisitorImpl() : ksiz_(0), vbuf_(NULL), vsiz_(0) {}
         char* pop(size_t* ksp, const char** vbp, size_t* vsp) {
           *ksp = ksiz_;
           *vbp = vbuf_;
@@ -802,13 +802,15 @@ class BasicDB : public DB {
           return kbuf_;
         }
         void clear() {
-          delete[] kbuf_;
+          //delete[] kbuf_;
         }
        private:
         const char* visit_full(const char* kbuf, size_t ksiz,
                                const char* vbuf, size_t vsiz, size_t* sp) {
           size_t rsiz = ksiz + 1 + vsiz + 1;
-          kbuf_ = new char[rsiz];
+          assert(rsiz <= 300);
+
+          //kbuf_ = new char[rsiz];
           mymemcpy(kbuf_, kbuf, ksiz);
           kbuf_[ksiz] = '\0';
           ksiz_ = ksiz;
@@ -818,9 +820,9 @@ class BasicDB : public DB {
           vsiz_ = vsiz;
           return NOP;
         }
-        char* kbuf_;
+        char kbuf_[300];
         size_t ksiz_;
-        char* vbuf_;
+        char * vbuf_;
         size_t vsiz_;
       };
       VisitorImpl visitor;
