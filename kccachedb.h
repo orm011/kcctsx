@@ -514,7 +514,7 @@ class CacheDB : public BasicDB {
       mlock_(), flock_(), error_(), logger_(NULL), logkinds_(0), mtrigger_(NULL),
       omode_(0), curs_(), path_(""), type_(TYPECACHE),
       opts_(0), bnum_(DEFBNUM), capcnt_(-1), capsiz_(-1),
-      opaque_(), embcomp_(ZLIBRAWCOMP), comp_(NULL), slots_(), rttmode_(true), tran_(false) {
+      opaque_(), embcomp_(ZLIBRAWCOMP), comp_(NULL), slots_(), rttmode_(false), tran_(false) {
     _assert_(true);
     assert(!this->error());
   }
