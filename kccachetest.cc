@@ -1987,7 +1987,7 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
       bool err_;
     };
     char lbuf[RECBUFSIZL];
-    std::memset(lbuf, '*', sizeof(lbuf)); // wth is this, it is being sharedb by all threads.
+    std::memset(lbuf, '*', sizeof(lbuf));
     ThreadWicked threads[THREADMAX];
 
 //    if (false ) { //thnum < 2
