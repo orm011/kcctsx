@@ -1889,7 +1889,7 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
 /*
  * These are bulk set/get/remove
  */
-//          if (myrand(100) == 0) {
+//          if (myrand(100) == 0) {  // 1/100 of the time, after done with other ops, also do some bulk ops
 //            int32_t jnum = myrand(10);
 //            switch (myrand(4)) {
 //              case 0: {
