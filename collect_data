@@ -14,13 +14,13 @@ RNUM=3000000 #will get x 10 in database. with 3Mx10ops, expect lowest time be ~9
 for algo in $ALGOS; do
 
     if [[ $algo == locks ]]; then
-	make clean && make -j8 METHOD=locks
+	(make clean && make -j8 METHOD=locks) || (echo "build failed" && exit 1)
 	THREADS=8
     elif [[ $algo == none ]]; then
-	make clean && make -j8 METHOD=none
+	(make clean && make -j8 METHOD=none) || (echo "build failed" && exit 1)
 	THREADS=1
     else
-	make clean && make -j8 METHOD=tm
+	(make clean && make -j8 METHOD=tm) || (echo "build failed" && exit 1)
 	export ITM_DEFAULT_METHOD=$algo 
 	THREADS=8
     fi
