@@ -1,15 +1,14 @@
 #! /bin/bash -u
 
-JEMALLOC="/usr/lib/x86_64-linux-gnu/libjemalloc.so.1"
-TCMALLOC="/usr/lib/libtcmalloc_minimal.so.4"
-LIBITM="/home/amatveev/GCC_libitm_memcached_version/libitm_memcached.so.1.0.0"
-export LD_PRELOAD="$TCMALLOC:$LIBITM"
 export ITM_HTM_RESTARTS=1 
 
+#| sed 's/^\(.*\)::\(.*\)/\2:\1/g
+
+
 OUT="results.cat"
-ALGOS="htm rh_htm_gl_wt locks none"
+ALGOS="htm rh_htm_gl_wt none locks"
 REPS=3
-RNUM=3000000 #will get x 10 in database. with 3Mx10ops, expect lowest time be ~900ms longest 15s.
+RNUM=10000000 #will get x 10 in database. with 3Mx10ops, expect lowest time be ~900ms longest 15s.
 
 for algo in $ALGOS; do
 
@@ -25,11 +24,15 @@ for algo in $ALGOS; do
 	THREADS=8
     fi
     
-    ./kccachetest sanity $THREADS 10000 || (echo 'failed sanity check!!!' &&  exit 1)
+    ./tmenv ./kccachetest sanity $THREADS 10000 || (echo 'failed sanity check!!!' &&  exit 1)
     
     for thds in $(seq $THREADS); do 
-    	for rep in $(seq $REPS); do 
-	    (taskset -c 0-7 ./kccachetest wicked -th $thds $RNUM; echo 'algo: ' $algo;) >> $OUT 
+    	for rep in $(seq $REPS); do
+	    (taskset -c 0-7 \
+		./tmenv \
+		ocperf.py stat -x:: -e rtm_retired.start -e rtm_retired.commit -e rtm_retired.aborted "-e rtm_retired.aborted_misc"{1,2,3,4,5} \
+		./kccachetest wicked -th $thds $RNUM 2>&1;
+		echo 'algo:' $algo) >> $OUT
 	done
     done 
 done
