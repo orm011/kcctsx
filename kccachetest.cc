@@ -1669,7 +1669,7 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
         thnum_ = thnum;
         lbuf_ = lbuf;
         err_ = false;
-        seedp_ = new int(rand());
+        seedp_ = new int(thnum);
       }
 
       int myrand(int i){
