@@ -1687,7 +1687,9 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
 
       void run() {
         //printf("id: %d. rnum: %ld\n", id_, rnum_);
+#ifdef CURSOR
         kc::DB::Cursor* cur = db_->cursor();
+#endif
         int64_t range = rnum_ * thnum_ / 2;
         for (int64_t i = 1; !err_ && i <= rnum_; i++) {
         // 1/100th of the time, do a transaction.
@@ -1821,6 +1823,7 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
 //                }
 //                break;
 //              }
+#ifdef CURSOR
               case 8: {
                 if (myrand(10) == 0) {
                   if (!cur->jump(kbuf, ksiz) &&
@@ -1868,6 +1871,7 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
                 }
                 break;
               }
+#endif
               default: {
                 size_t rsiz;
                 char* rbuf = db_->get(kbuf, ksiz, &rsiz);
@@ -1970,7 +1974,9 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
 //          }
           assert(!err_);
         }
+#ifdef CURSOR
        delete cur;
+#endif
       }
      private:
       int32_t id_;
