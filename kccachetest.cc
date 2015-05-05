@@ -1658,7 +1658,7 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
       err = true;
     }
     class ThreadWicked : public kc::Thread {
-      int seed_ =0;
+      int * seedp_ = nullptr;
 
      public:
       void setparams(int32_t id, kc::CacheDB* db, int64_t rnum, int32_t thnum,
@@ -1669,16 +1669,21 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
         thnum_ = thnum;
         lbuf_ = lbuf;
         err_ = false;
-        seed_ = rand();
+        seedp_ = new int(thnum);
       }
 
       int myrand(int i){
-        return myrandmarsaglia(i, &seed_);
+        return myrandmarsaglia(i, seedp_);
       }
 
       bool error() {
         return err_;
       }
+
+      ~ThreadWicked() {
+        delete seedp_;
+      }
+
 
       void run() {
         //printf("id: %d. rnum: %ld\n", id_, rnum_);
