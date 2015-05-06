@@ -45,6 +45,7 @@ DESTDIR =
 
 # Building configuration
 METHOD=tm
+DEBUG=1
 CC = @CC@
 CXX = @CXX@
 CPPFLAGS = @MYCPPFLAGS@ \
@@ -70,7 +71,9 @@ endif
 endif
 endif
 
-
+ifeq ($(DEBUG),0)
+	CPPFLAGS+="-DNDEBUG" #seemed to have impact in the abort rate
+endif
 
 CMDLDFLAGS = @MYCMDLDFLAGS@
 CMDLIBS = @MYCMDLIBS@
