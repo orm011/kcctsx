@@ -1,0 +1,9 @@
+#! /bin/bash -u
+#JEMALLOC="/usr/lib/x86_64-linux-gnu/libjemalloc.so.1"
+
+PATH=$PATH:/home/orm/pmu-tools/
+TCMALLOC="/usr/lib/libtcmalloc_minimal.so.4"
+LIBITM="/home/amatveev/GCC_libitm_memcached_version/libitm_memcached.so.1.0.0"
+export LD_PRELOAD="$TCMALLOC:$LIBITM"  
+
+$*
