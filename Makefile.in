@@ -56,15 +56,14 @@ CXXFLAGS = @MYCXXFLAGS@
 LDFLAGS = @MYLDFLAGS@
 
 ifeq ($(METHOD),locks)
-	CPPFLAGS+=-D__transaction_atomic="" -DLOCKING=1
+	CPPFLAGS+=-D__transaction_atomic="" -DLOCKING
 else
 ifeq ($(METHOD),tm)
-	CPPFLAGS+=-DLOCKING=0
 	CXXFLAGS+=-fgnu-tm
 	LDFLAGS+=-litm
 else
 ifeq ($(METHOD),none)
-	CPPFLAGS+=-D__transaction_atomic="" -DLOCKING=0
+	CPPFLAGS+=-D__transaction_atomic=""
 else
 	CPPFLAGS+="-fFAIL"
 endif

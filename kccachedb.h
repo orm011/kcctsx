@@ -163,9 +163,8 @@ class CacheDB : public BasicDB {
      */
     explicit Cursor(CacheDB* db) : db_(db), sidx_(-1), rec_(NULL) {
       _assert_(db);
-#if LOCKING != 1
     __transaction_atomic
-#else
+#ifdef LOCKING
       ScopedRWLock lock(&db_->mlock_, true);
 #endif
       {
@@ -178,9 +177,8 @@ class CacheDB : public BasicDB {
     virtual ~Cursor() {
       _assert_(true);
       if (!db_) return;
-#if LOCKING != 1
     __transaction_atomic
-#else
+#ifdef LOCKING
       ScopedRWLock lock(&db_->mlock_, true);
 #endif
     {
@@ -198,9 +196,8 @@ class CacheDB : public BasicDB {
      * be performed in this function.
      */
     bool accept(Visitor* visitor, bool writable = true, bool step = false) {
-#if LOCKING != 1
     __transaction_atomic
-#else
+#ifdef LOCKING
       ScopedRWLock lock(&db_->mlock_, true);
 #endif
     {
@@ -258,9 +255,8 @@ class CacheDB : public BasicDB {
      */
     bool jump() {
       _assert_(true);
-#if LOCKING != 1
     __transaction_atomic
-#else
+#ifdef LOCKING
       ScopedRWLock lock(&db_->mlock_, true);
 #endif
     {
@@ -292,9 +288,8 @@ class CacheDB : public BasicDB {
      */
     bool jump(const char* kbuf, size_t ksiz) {
       _assert_(kbuf && ksiz <= MEMMAXSIZ);
-#if LOCKING != 1
     __transaction_atomic
-#else
+#ifdef LOCKING
       ScopedRWLock lock(&db_->mlock_, true);
 #endif
     {
@@ -358,9 +353,8 @@ class CacheDB : public BasicDB {
      */
     bool jump_back() {
       _assert_(true);
-#if LOCKING != 1
     __transaction_atomic
-#else
+#ifdef LOCKING
       ScopedRWLock lock(&db_->mlock_, true);
 #endif
     {
@@ -381,9 +375,8 @@ class CacheDB : public BasicDB {
      */
     bool jump_back(const char* kbuf, size_t ksiz) {
       _assert_(kbuf && ksiz <= MEMMAXSIZ);
-#if LOCKING != 1
     __transaction_atomic
-#else
+#ifdef LOCKING
       ScopedRWLock lock(&db_->mlock_, true);
 #endif
     {
@@ -404,9 +397,8 @@ class CacheDB : public BasicDB {
      */
     bool jump_back(const std::string& key) {
       _assert_(true);
-#if LOCKING != 1
     __transaction_atomic
-#else
+#ifdef LOCKING
       ScopedRWLock lock(&db_->mlock_, true);
 #endif
     {
@@ -427,9 +419,8 @@ class CacheDB : public BasicDB {
      */
     bool step() {
       _assert_(true);
-#if LOCKING != 1
     __transaction_atomic
-#else
+#ifdef LOCKING
       ScopedRWLock lock(&db_->mlock_, true);
 #endif
     {
@@ -455,9 +446,8 @@ class CacheDB : public BasicDB {
      */
     bool step_back() {
       _assert_(true);
-#if LOCKING != 1
     __transaction_atomic
-#else
+#ifdef LOCKING
       ScopedRWLock lock(&db_->mlock_, true);
 #endif
     {
@@ -574,9 +564,8 @@ class CacheDB : public BasicDB {
    */
   bool accept(const char* kbuf, size_t ksiz, Visitor* visitor, bool writable = true) {
     assert(kbuf && ksiz <= MEMMAXSIZ && visitor);
-#if LOCKING != 1
     __transaction_atomic
-#else
+#ifdef LOCKING
     ScopedRWLock lock(&mlock_, false);
 #endif
     {
@@ -597,11 +586,11 @@ class CacheDB : public BasicDB {
     Slot* slot = slots_ + sidx;
     //printf("thnum: %lu, sidx: %d\n", pthread_self(), sidx);
 
-#if LOCKING == 1
+#ifdef LOCKING
     slot->lock.lock();
 #endif
     accept_impl(slot, hash, kbuf, ksiz, visitor, comp_, rttmode_);
-#if LOCKING == 1
+#ifdef LOCKING
     slot->lock.unlock();
 #endif
     }
@@ -620,9 +609,8 @@ class CacheDB : public BasicDB {
   bool accept_bulk(const std::vector<std::string>& keys, Visitor* visitor,
                    bool writable = true) {
     _assert_(visitor);
-#if LOCKING == 0
     __transaction_atomic
-#else
+#ifdef LOCKING
     ScopedRWLock lock(&mlock_, false);
 #endif
     {
@@ -644,7 +632,7 @@ class CacheDB : public BasicDB {
       int32_t sidx;
     };
     RecordKey* rkeys = new RecordKey[knum];
-#if LOCKING == 1
+#ifdef LOCKING
     std::set<int32_t> sidxs;
 #endif
     for (size_t i = 0; i < knum; i++) {
@@ -655,12 +643,12 @@ class CacheDB : public BasicDB {
       if (rkey->ksiz > KSIZMAX) rkey->ksiz = KSIZMAX;
       rkey->hash = hash_record(rkey->kbuf, rkey->ksiz);
       rkey->sidx = rkey->hash % SLOTNUM;
-#if LOCKING == 1
+#ifdef LOCKING
       sidxs.insert(rkey->sidx);
 #endif
       rkey->hash /= SLOTNUM;
     }
-#if LOCKING == 1
+#ifdef LOCKING
     std::set<int32_t>::iterator sit = sidxs.begin();
     std::set<int32_t>::iterator sitend = sidxs.end();
     while (sit != sitend) {
@@ -674,7 +662,7 @@ class CacheDB : public BasicDB {
       Slot* slot = slots_ + rkey->sidx;
       accept_impl(slot, rkey->hash, rkey->kbuf, rkey->ksiz, visitor, comp_, rttmode_);
     }
-#if LOCKING == 1
+#ifdef LOCKING
     sit = sidxs.begin();
     sitend = sidxs.end();
     while (sit != sitend) {
