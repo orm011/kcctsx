@@ -1,4 +1,11 @@
 *.a
 *.o
+*.so.*
 *.so
 \.*
+\#*
+*.def
+*.co
+*.pc
+kccachetest
+Makefile
