@@ -66,9 +66,10 @@ class DB {
   class Visitor {
    public:
     /** Special pointer for no operation. */
-    static const char* const NOP;
+    static constexpr const char * const  NOP = reinterpret_cast<char*>(0);
     /** Special pointer to remove the record. */
-    static const char* const REMOVE;
+    static constexpr const char * const REMOVE = reinterpret_cast<char*>(1);
+
     /**
      * Destructor.
      */
