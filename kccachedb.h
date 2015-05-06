@@ -620,7 +620,12 @@ class CacheDB : public BasicDB {
   bool accept_bulk(const std::vector<std::string>& keys, Visitor* visitor,
                    bool writable = true) {
     _assert_(visitor);
+#if LOCKING == 0
+    __transaction_atomic
+#else
     ScopedRWLock lock(&mlock_, false);
+#endif
+    {
     if (omode_ == 0) {
       set_error(_KCCODELINE_, Error::INVALID, "not opened");
       return false;
@@ -639,7 +644,9 @@ class CacheDB : public BasicDB {
       int32_t sidx;
     };
     RecordKey* rkeys = new RecordKey[knum];
+#if LOCKING == 1
     std::set<int32_t> sidxs;
+#endif
     for (size_t i = 0; i < knum; i++) {
       const std::string& key = keys[i];
       RecordKey* rkey = rkeys + i;
@@ -648,9 +655,12 @@ class CacheDB : public BasicDB {
       if (rkey->ksiz > KSIZMAX) rkey->ksiz = KSIZMAX;
       rkey->hash = hash_record(rkey->kbuf, rkey->ksiz);
       rkey->sidx = rkey->hash % SLOTNUM;
+#if LOCKING == 1
       sidxs.insert(rkey->sidx);
+#endif
       rkey->hash /= SLOTNUM;
     }
+#if LOCKING == 1
     std::set<int32_t>::iterator sit = sidxs.begin();
     std::set<int32_t>::iterator sitend = sidxs.end();
     while (sit != sitend) {
@@ -658,11 +668,13 @@ class CacheDB : public BasicDB {
       slot->lock.lock();
       ++sit;
     }
+#endif
     for (size_t i = 0; i < knum; i++) {
       RecordKey* rkey = rkeys + i;
       Slot* slot = slots_ + rkey->sidx;
       accept_impl(slot, rkey->hash, rkey->kbuf, rkey->ksiz, visitor, comp_, rttmode_);
     }
+#if LOCKING == 1
     sit = sidxs.begin();
     sitend = sidxs.end();
     while (sit != sitend) {
@@ -670,8 +682,12 @@ class CacheDB : public BasicDB {
       slot->lock.unlock();
       ++sit;
     }
+#endif
     delete[] rkeys;
     return true;
+  }
+    assert(0);
+    return false;
   }
   /**
    * Iterate to accept a visitor for each record.
