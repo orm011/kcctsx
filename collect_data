@@ -24,7 +24,7 @@ for algo in $ALGOS; do
 	THREADS=8
     fi
     
-    ./tmenv ./kccachetest sanity $THREADS 10000 || (echo 'failed sanity check!!!' &&  exit 1)
+    #./tmenv ./kccachetest sanity $THREADS 10000 || (echo 'failed sanity check!!!' &&  exit 1)
     
     for thds in $(seq $THREADS); do 
     	for rep in $(seq $REPS); do
