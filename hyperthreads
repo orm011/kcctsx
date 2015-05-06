@@ -1,0 +1,10 @@
+# for cpunum in $(
+#     cat /sys/devices/system/cpu/cpu*/topology/thread_siblings_list | 
+#     cut -s -d, -f2- | tr ',' '\n' | sort -un); do
+#         echo 1 > /sys/devices/system/cpu/cpu$cpunum/online
+# done
+
+#activatte
+for file in /sys/devices/system/cpu/cpu*/online; do		
+    echo 1 > $file
+done
