@@ -10,5 +10,9 @@
 *.data
 *.tmp
 *.cat
+*.csv
+*.png
+config.status
+tags
 kccachetest
 Makefile
