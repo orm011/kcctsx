@@ -1,10 +1,8 @@
-#! /bin/bash -u
+#! /bin/bash -uex
 
 export ITM_HTM_RESTARTS=1 
 
 #| sed 's/^\(.*\)::\(.*\)/\2:\1/g
-
-
 OUT="results.cat"
 ALGOS="htm rh_htm_gl_wt none locks"
 REPS=3
@@ -13,18 +11,18 @@ RNUM=10000000 #will get x 10 in database. with 3Mx10ops, expect lowest time be ~
 for algo in $ALGOS; do
 
     if [[ $algo == locks ]]; then
-	(make clean && make -j8 METHOD=locks) || (echo "build failed" && exit 1)
+	make clean && make -j16 METHOD=locks
 	THREADS=8
     elif [[ $algo == none ]]; then
-	(make clean && make -j8 METHOD=none) || (echo "build failed" && exit 1)
+	make clean && make -j16 METHOD=locks
 	THREADS=1
     else
-	(make clean && make -j8 METHOD=tm) || (echo "build failed" && exit 1)
+	make clean && make -j8 METHOD=tm
 	export ITM_DEFAULT_METHOD=$algo 
 	THREADS=8
     fi
     
-    ./tmenv ./kccachetest sanity $THREADS 10000 || (echo 'failed sanity check!!!' &&  exit 1)
+    ./tmenv ./kccachetest sanity $THREADS 10000
     
     for thds in $(seq $THREADS); do 
     	for rep in $(seq $REPS); do
