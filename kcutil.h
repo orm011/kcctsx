@@ -18,6 +18,16 @@
 
 #include <kccommon.h>
 
+extern void __attribute__((transaction_pure)) abort(void) __THROW __attribute__ ((__noreturn__));
+
+#define myassert(exp)\
+      do {\
+        if ((exp)) {\
+        } else { \
+          abort();\
+        }\
+      } while (0)
+
 namespace kyotocabinet {                 // common namespace
 
 

@@ -1145,11 +1145,17 @@ class CacheDB : public BasicDB {
    */
   int64_t count() {
     _assert_(true);
+    // adding __transaction_safe at this location was making gcc crash.
+    // so, since count_impl() is already safe and called by multiple
+    // client functions, we just check omode_ there.
+#ifdef LOCKING
     ScopedRWLock lock(&mlock_, false);
-    if (omode_ == 0) {
-      set_error(_KCCODELINE_, Error::INVALID, "not opened");
-      return -1;
-    }
+#endif
+//    {
+//      if (omode_ == 0) {
+//      set_error(_KCCODELINE_, Error::INVALID, "not opened");
+//      return -1;
+//    }
     return count_impl();
   }
   /**
@@ -1158,11 +1164,14 @@ class CacheDB : public BasicDB {
    */
   int64_t size() {
     _assert_(true);
+#ifdef LOCKING
     ScopedRWLock lock(&mlock_, false);
-    if (omode_ == 0) {
-      set_error(_KCCODELINE_, Error::INVALID, "not opened");
-      return -1;
-    }
+#endif
+    // See count() comments re __transaction_safe.
+//    if (omode_ == 0) {
+//      set_error(_KCCODELINE_, Error::INVALID, "not opened");
+//      return -1;
+//    }
     return size_impl();
   }
   /**
@@ -2056,6 +2065,7 @@ class CacheDB : public BasicDB {
     _assert_(true);
     int64_t sum = 0;
     __transaction_atomic {
+      myassert(this->omode_);
     for (int32_t i = 0; i < SLOTNUM; i++) {
       Slot* slot = slots_ + i;
 #ifdef LOCKING
@@ -2074,6 +2084,7 @@ class CacheDB : public BasicDB {
     _assert_(true);
     int64_t sum = sizeof(*this);
     __transaction_atomic {
+      myassert(this->omode_);
     for (int32_t i = 0; i < SLOTNUM; i++) {
       Slot* slot = slots_ + i;
 #ifdef LOCKING
