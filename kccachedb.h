@@ -249,6 +249,8 @@ class CacheDB : public BasicDB {
       }
       return true;
       }
+    assert(false);
+    return false;
     }
     /**
      * Jump the cursor to the first record for forward scan.
@@ -279,6 +281,8 @@ class CacheDB : public BasicDB {
       rec_ = NULL;
       return false;
     }
+    assert(false);
+    return false;
     }
     /**
      * Jump the cursor to a record for forward scan.
@@ -337,6 +341,8 @@ class CacheDB : public BasicDB {
       rec_ = NULL;
       return false;
     }
+    assert(false);
+    return false;
     }
     /**
      * Jump the cursor to a record for forward scan.
@@ -365,6 +371,9 @@ class CacheDB : public BasicDB {
       db_->set_error(_KCCODELINE_, Error::NOIMPL, "not implemented");
       return false;
     }
+    assert(false);
+    return false;
+
     }
     /**
      * Jump the cursor to a record for backward scan.
@@ -385,6 +394,9 @@ class CacheDB : public BasicDB {
       db_->set_error(_KCCODELINE_, Error::NOIMPL, "not implemented");
       return false;
     }
+    assert(false);
+    return false;
+
     }
     /**
      * Jump the cursor to a record for backward scan.
@@ -405,6 +417,9 @@ class CacheDB : public BasicDB {
       db_->set_error(_KCCODELINE_, Error::NOIMPL, "not implemented");
       return false;
     }
+    assert(false);
+    return false;
+
     }
     /**
      * Step the cursor to the next record.
@@ -429,7 +444,11 @@ class CacheDB : public BasicDB {
       bool err = false;
       if (!step_impl()) err = true;
       return !err;
-    }}
+    }
+    assert(false);
+    return false;
+
+    }
     /**
      * Step the cursor to the previous record.
      * @note This is a dummy implementation for compatibility.
@@ -448,7 +467,11 @@ class CacheDB : public BasicDB {
       }
       db_->set_error(_KCCODELINE_, Error::NOIMPL, "not implemented");
       return false;
-    }}
+    }
+    assert(false);
+    return false;
+
+    }
     /**
      * Get the database object.
      * @return the database object.
