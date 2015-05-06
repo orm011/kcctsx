@@ -524,7 +524,11 @@ class CacheDB : public BasicDB {
    * Default constructor.
    */
   explicit CacheDB() :
-      mlock_(), flock_(), error_(), logger_(NULL), logkinds_(0), mtrigger_(NULL),
+      mlock_(),
+#ifdef LOCKING
+      flock_(),
+#endif
+      error_(), logger_(NULL), logkinds_(0), mtrigger_(NULL),
       omode_(0), curs_(), path_(""), type_(TYPECACHE),
       opts_(0), bnum_(DEFBNUM), capcnt_(-1), capsiz_(-1),
       opaque_(), embcomp_(ZLIBRAWCOMP), comp_(NULL), slots_(), rttmode_(true), tran_(false) {
@@ -2241,7 +2245,11 @@ class CacheDB : public BasicDB {
    */
   void escape_cursors(Record* rec) {
     _assert_(rec);
+    __transaction_atomic {
+#ifdef LOCKING
     ScopedMutex lock(&flock_);
+#endif
+
     if (curs_.empty()) return;
     CursorList::const_iterator cit = curs_.begin();
     CursorList::const_iterator citend = curs_.end();
@@ -2249,6 +2257,7 @@ class CacheDB : public BasicDB {
       Cursor* cur = *cit;
       if (cur != nullptr && cur->rec_ == rec) cur->step_impl();
       ++cit;
+    }
     }
   }
   /**
@@ -2258,7 +2267,10 @@ class CacheDB : public BasicDB {
    */
   void adjust_cursors(Record* orec, Record* nrec) {
     _assert_(orec && nrec);
+    __transaction_atomic {
+#ifdef LOCKING
     ScopedMutex lock(&flock_);
+#endif
     if (curs_.empty()) return;
     CursorList::const_iterator cit = curs_.begin();
     CursorList::const_iterator citend = curs_.end();
@@ -2267,13 +2279,17 @@ class CacheDB : public BasicDB {
       if (cur != nullptr && cur->rec_ == orec) cur->rec_ = nrec;
       ++cit;
     }
+    }
   }
   /**
    * Disable all cursors.
    */
   void disable_cursors() {
     _assert_(true);
+    __transaction_atomic {
+#ifdef LOCKING
     ScopedMutex lock(&flock_);
+#endif
     CursorList::const_iterator cit = curs_.begin();
     CursorList::const_iterator citend = curs_.end();
     while (cit != citend) {
@@ -2284,6 +2300,7 @@ class CacheDB : public BasicDB {
       }
       ++cit;
     }
+    }
   }
   /** Dummy constructor to forbid the use. */
   CacheDB(const CacheDB&);
@@ -2291,8 +2308,11 @@ class CacheDB : public BasicDB {
   CacheDB& operator =(const CacheDB&);
   /** The method lock. */
   RWLock mlock_;
+#ifdef LOCKING
   /** The file lock. */
   Mutex flock_;
+#endif
+
   /** The last happened error. */
   TSD<Error> error_;
   /** The internal logger. */
