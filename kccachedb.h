@@ -1712,7 +1712,9 @@ class CacheDB : public BasicDB {
    * Slot table.
    */
   struct Slot {
+#ifdef LOCKING
     Mutex lock;                       ///< lock
+#endif
     Record** buckets;                    ///< bucket array
     size_t bnum;                         ///< number of buckets
     size_t capcnt;                       ///< cap of record number
@@ -2051,10 +2053,14 @@ class CacheDB : public BasicDB {
   int64_t count_impl() {
     _assert_(true);
     int64_t sum = 0;
+    __transaction_atomic {
     for (int32_t i = 0; i < SLOTNUM; i++) {
       Slot* slot = slots_ + i;
+#ifdef LOCKING
       ScopedMutex lock(&slot->lock);
+#endif
       sum += slot->count;
+    }
     }
     return sum;
   }
@@ -2065,11 +2071,15 @@ class CacheDB : public BasicDB {
   int64_t size_impl() {
     _assert_(true);
     int64_t sum = sizeof(*this);
+    __transaction_atomic {
     for (int32_t i = 0; i < SLOTNUM; i++) {
       Slot* slot = slots_ + i;
+#ifdef LOCKING
       ScopedMutex lock(&slot->lock);
+#endif
       sum += slot->bnum * sizeof(Record*);
       sum += slot->size;
+    }
     }
     return sum;
   }
