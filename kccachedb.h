@@ -574,12 +574,10 @@ class CacheDB : public BasicDB {
 #endif
     {
     if (omode_ == 0) {
-      assert(0);
       set_error(_KCCODELINE_, Error::INVALID, "not opened");
       return false;
     }
     if (writable && !(omode_ & OWRITER)) {
-      assert(0);
       set_error(_KCCODELINE_, Error::NOPERM, "permission denied");
       return false;
     }
