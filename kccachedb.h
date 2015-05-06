@@ -2241,7 +2241,7 @@ class CacheDB : public BasicDB {
    */
   void escape_cursors(Record* rec) {
     _assert_(rec);
-    //ScopedMutex lock(&flock_);
+    ScopedMutex lock(&flock_);
     if (curs_.empty()) return;
     CursorList::const_iterator cit = curs_.begin();
     CursorList::const_iterator citend = curs_.end();
@@ -2258,7 +2258,7 @@ class CacheDB : public BasicDB {
    */
   void adjust_cursors(Record* orec, Record* nrec) {
     _assert_(orec && nrec);
-    //ScopedMutex lock(&flock_);
+    ScopedMutex lock(&flock_);
     if (curs_.empty()) return;
     CursorList::const_iterator cit = curs_.begin();
     CursorList::const_iterator citend = curs_.end();
