@@ -15,8 +15,11 @@
 
 #include <kccachedb.h>
 #include "cmdcommon.h"
-
+#include <atomic>
 #include <string>
+#include <unistd.h>
+#include <stdlib.h>
+#include <iostream>
 
 // global variables
 const char* g_progname;                  // program name
@@ -39,6 +42,8 @@ int MarsagliaXOR(int *p_seed) {
 
     return seed & 0x7FFFFFFF;
 }
+
+static const int loaderThreads = 8;
 
 
 int myrandmarsaglia(int range, int * seedp) {
