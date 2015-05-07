@@ -152,7 +152,7 @@ public:
   }
 
   bool rtt() const {
-    return false;
+    return rtt_;
   }
 
   int keyrange() const {
@@ -164,8 +164,8 @@ public:
   }
 
   BenchParams() = default;
-  BenchParams(size_t targetcnt, int thnum, size_t kvsize, int readpercent, int durations)
-  : targetcnt_(targetcnt), thnum_(thnum), kvsize_(kvsize), readpercent_(readpercent), duration_(durations) {}
+  BenchParams(size_t targetcnt, int thnum, size_t kvsize, int readpercent, int durations, bool rtt)
+  : targetcnt_(targetcnt), thnum_(thnum), kvsize_(kvsize), readpercent_(readpercent), duration_(durations), rtt_(rtt) {}
 
   void print() {
     OUTPUT(targetcnt_);
@@ -173,6 +173,7 @@ public:
     OUTPUT(kvsize_);
     OUTPUT(readpercent_);
     OUTPUT(duration_);
+    OUTPUT(rtt_);
   }
 private:
   size_t targetcnt_ = 0;
@@ -181,6 +182,7 @@ private:
   int rnum_ = 0; // iterations
   int readpercent_ = 0; // between 0 and 100
   int duration_ = 0; // in seconds
+  bool rtt_ = false;
 };
 
 
@@ -253,6 +255,7 @@ static void procbench(BenchParams params) {
   using namespace std;
 
   kc::CacheDB db;
+  db.switch_rotation(params.rtt());
   uint32_t omode = kc::CacheDB::OWRITER | kc::CacheDB::OCREATE;
   assert(db.open("*", omode));
 
@@ -382,7 +385,7 @@ BenchParams parsebench(int argc, char** argv) {
   // => expected default size 2 * 100 * 1million = 20 MB
   int readpcnt = 90;
   int durations = 5;
-
+  bool rtt = false;
   for (int32_t i = 2; i < argc; i++) {
     if (argv[i][0] == '-') {
       if (!std::strcmp(argv[i], "-th")) {
@@ -400,14 +403,15 @@ BenchParams parsebench(int argc, char** argv) {
       } else if (!std::strcmp(argv[i], "-durations")) { //seconds
         if (++i >= argc) usage();
         durations = kc::atoix(argv[i]);
-      }
-    } else {
+      } else if (!std::strcmp(argv[i], "-rtt")) { //rtt flag
+        rtt = true;
+      } else {
         printf("arg parse error\n");
         exit(1);
     }
-  }
+  }}
 
-  return BenchParams(targetcnt, thnum, kvsize, readpcnt, durations);
+  return BenchParams(targetcnt, thnum, kvsize, readpcnt, durations, rtt);
 }
 
 
