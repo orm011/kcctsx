@@ -581,7 +581,11 @@ class CacheDB : public BasicDB {
       set_error(_KCCODELINE_, Error::NOPERM, "permission denied");
       return false;
     }
-    if (ksiz > KSIZMAX) ksiz = KSIZMAX;
+    if (ksiz > KSIZMAX) {
+      ksiz = KSIZMAX;
+      abort();
+    }
+
     uint64_t hash = hash_record(kbuf, ksiz);
     int32_t sidx = hash % SLOTNUM;
     hash /= SLOTNUM;
