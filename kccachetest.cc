@@ -97,22 +97,22 @@ struct OutputMetrics {
     size_t final_count {};
     size_t initial_size {};
     size_t final_size {};
-    double time {};
-    long reads {};
-    long writes {};
+    double actual_time {};
+    long actual_reads {};
+    long actual_writes {};
 
     long opcount() {
-      return reads + writes;
+      return actual_reads + actual_writes;
     }
 
     void merge (const OutputMetrics &other) {
-      reads += other.reads;
-      writes += other.writes;
+      actual_reads += other.actual_reads;
+      actual_writes += other.actual_writes;
     }
 
     void print() {
       long ops = opcount();
-      long pcntreads = ((float)reads/ops) * 100;
+      long pcntreads = ((float)actual_reads/ops) * 100;
       size_t initial_sizemb = initial_size >> 20;
       size_t final_sizemb = final_size >> 20;
 
@@ -122,9 +122,9 @@ struct OutputMetrics {
       OUTPUT(initial_sizemb);
       OUTPUT(final_size);
       OUTPUT(final_sizemb);
-      OUTPUT(reads);
-      OUTPUT(writes);
-      printf("time:%.3f\n", time); // formatting
+      OUTPUT(actual_reads);
+      OUTPUT(actual_writes);
+      printf("time:%.3f\n", actual_time); // formatting
       OUTPUT(ops);
       OUTPUT(pcntreads);
     }
@@ -236,7 +236,7 @@ static void runbench(kc::CacheDB* db, struct BenchParams params, int seed, std::
       set_key(keybuf, params.keyrange(), &seed);
 
       auto r = db->get(keybuf, params.keysize(), valbuf, params.valsize());
-      out->reads++;
+      out->actual_reads++;
 
       if (r < 0 && db->error() != Error::NOREC) {
           abort();
@@ -353,14 +353,14 @@ static void procbench(BenchParams params) {
   double end = kc::time(); // call time before anything else
   output.final_size = db.size();  //size() and count() must be called before close.
   output.final_count = db.count();
-  output.time = end - start; // also
+  output.actual_time = end - start; // also
 
   assert(db.close());
   for (int32_t i = 0; i < params.thnum(); i++) {
     output.merge(threads[i].get_output());
   }
 
-  double throughput  = ((double)output.opcount()/output.time);
+  double throughput  = ((double)output.opcount()/output.actual_time);
 
   // report
   params.print();
