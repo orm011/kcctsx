@@ -31,7 +31,7 @@ for algo in $ALGOS; do
 	    (taskset -c 0-7 \
 		./tmenv \
 		ocperf.py stat -x:: -e tx_mem.abort_capacity_write -e tx_mem.abort_conflict "-e tx_exec.misc"{1,2,3,4,5} -e rtm_retired.start -e rtm_retired.commit -e rtm_retired.aborted:pp "-e rtm_retired.aborted_misc"{1,2,3,4,5} \
-		./kccachetest wicked -th $thds $RNUM 2>&1;
+		./kccachetest bench -th $thds -targetcnt 1000000 -readpcnt 90 -durations 2 2>&1;
 		echo 'algo:' $algo) >> $OUT
 	done
     done 
