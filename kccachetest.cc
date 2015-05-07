@@ -330,6 +330,7 @@ static void procbench(BenchParams params) {
     lthreads[i].setparams(&db, params, i);
   }
 
+  double start_loading = kc::time();
   for (int32_t i = 0; i < loaderThreads; i++) {
     lthreads[i].start();
   }
@@ -337,6 +338,9 @@ static void procbench(BenchParams params) {
   for (int32_t i = 0; i < loaderThreads; i++) {
     lthreads[i].join();
   }
+
+  double end_loading = kc::time();
+  printf("load_time:%.03f\n", end_loading - start_loading);
 
   class ThreadBench : public kc::Thread {
   public:
