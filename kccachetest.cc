@@ -97,23 +97,38 @@ struct OutputMetrics {
     size_t initial_size {};
     size_t final_size {};
     double actual_time {};
-    long actual_reads {};
-    long actual_writes {};
+    long read_attempts {};
+    long read_success {};
+    long add_attempts {};
+    long add_success {};
+    long remove_attempts {};
+    long remove_success;
 
     long opcount() {
-      return actual_reads + actual_writes;
+      return read_attempts + add_attempts  + remove_attempts;
     }
 
     void merge (const OutputMetrics &other) {
-      actual_reads += other.actual_reads;
-      actual_writes += other.actual_writes;
+      read_attempts += other.read_attempts;
+      read_success += other.read_success;
+
+      add_attempts += other.add_attempts;
+      add_success += other.add_success;
+
+      remove_attempts += other.remove_attempts;
+      remove_success += other.remove_success;
     }
 
     void print() {
       long ops = opcount();
-      long pcntreads = ((float)actual_reads/ops) * 100;
+      long actual_pcntreads = ((float)read_attempts/ops) * 100;
       size_t initial_sizemb = initial_size >> 20;
       size_t final_sizemb = final_size >> 20;
+
+      long read_successrate = ((float)read_success/read_attempts) * 100;
+      long add_successrate = ((float)add_success/add_attempts) * 100;
+      long remove_successrate = ((float)remove_success/remove_attempts) * 100;
+      long actual_pcntremove = ((float)remove_attempts/ops) * 100;
 
       OUTPUT(initial_count);
       OUTPUT(final_count);
@@ -121,11 +136,13 @@ struct OutputMetrics {
       OUTPUT(initial_sizemb);
       OUTPUT(final_size);
       OUTPUT(final_sizemb);
-      OUTPUT(actual_reads);
-      OUTPUT(actual_writes);
+      OUTPUT(read_successrate);
+      OUTPUT(add_successrate);
+      OUTPUT(remove_successrate);
       printf("time:%.3f\n", actual_time); // formatting
       OUTPUT(ops);
-      OUTPUT(pcntreads);
+      OUTPUT(actual_pcntreads);
+      OUTPUT(actual_pcntremove);
     }
 };
 
@@ -192,6 +209,12 @@ void set_key(char *keybuf, int range, int * seed) {
 }
 
 
+#define ERR(db)\
+    do {\
+      dberrprint(db, __LINE__, __FILE__);\
+      } while (0)
+
+
 static void loadbench(kc::CacheDB* db, struct BenchParams params, int seed) {
   using namespace std;
 
@@ -212,36 +235,58 @@ static void loadbench(kc::CacheDB* db, struct BenchParams params, int seed) {
     } else if (db->error().code() == kc::BasicDB::Error::DUPREC){
       // try again
     } else {
-      printf("%s\n", kc::BasicDB::Error::codename(db->error().code()));
-      assert(false);
+      ERR(db);
+      //printf("%s\n", kc::BasicDB::Error::codename(db->error().code()));
+      //assert(false);
+      abort();
     }
   }
 }
 
 static void runbench(kc::CacheDB* db, struct BenchParams params, int seed, std::atomic<int> * fl, OutputMetrics * out)
 {
-    using Error = kc::BasicDB::Error ;
-
+    using Error = kc::BasicDB::Error;
     using namespace std;
 
     char * keybuf = new char[params.keysize()];
     char * valbuf = new char[params.valsize()];
-
+    memset(valbuf, 'v', params.valsize());
     memset(keybuf, 'k', params.keysize()); // init the buffer once.
 
     int iters = 0;
     const int period = 50;
 
     while (iters % period != 0 || fl->load() != 1) { // check flag every period
+
       ++iters;
       set_key(keybuf, params.keyrange(), &seed);
 
-      auto r = db->get(keybuf, params.keysize(), valbuf, params.valsize());
-      out->actual_reads++;
-
-      if (r < 0 && db->error() != Error::NOREC) {
+      if (myrandmarsaglia(100, &seed) <= params.readpercent()) { // do a read depending on readpercent
+        auto r = db->get(keybuf, params.keysize(), valbuf, params.valsize());
+        out->read_attempts++;
+        out->read_success += (r >=0);
+        if (r < 0 && db->error() != Error::NOREC) {
+          ERR(db);
           abort();
+        }
+      } else if (myrandmarsaglia(2, &seed) == 1) { // do an insert or delete otherwise
+        auto r = db->add(keybuf, params.keysize(), valbuf, params.valsize());
+        out->add_attempts++;
+        out->add_success += (!!r);
+        if (!r && db->error() != Error::DUPREC) {
+          ERR(db);
+          abort();
+        }
+      } else {
+        auto r = db->remove(keybuf, params.keysize());
+        out->remove_attempts++;
+        out->remove_success += (!!r);
+        if (!r && db->error() != Error::NOREC) {
+          ERR(db);
+          abort();
+        }
       }
+
     }
 
     assert(fl->load() == 1);
