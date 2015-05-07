@@ -2374,95 +2374,6 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
 }
 
 
-static void sanity(kc::CacheDB& db, int id, int rnum) {
-
-  using namespace std;
-
-  static const size_t maxsz = 1000;
-  string key(to_string(id) + "keynumber" + to_string(id));
-
-  for (int i = 0; i < rnum; ++i){
-    char val0[maxsz];
-
-    //should get nothing
-    assert(db.get(key.c_str(), key.size(), val0, sizeof(val0)) == -1);
-
-    //add should succeed
-    auto firstval = key + "firstval";
-    assert(db.add(key.c_str(), key.size(), firstval.c_str(), firstval.size()));
-
-    // should read my write
-    int res_raw = db.get(key.c_str(), key.size(), val0, sizeof(val0));
-    assert (res_raw >= 0);
-    assert((unsigned int)res_raw == firstval.size());
-    //cout << string(val0) << " " << firstval << endl;
-    assert(string(val0, res_raw) == firstval);
-
-    // repeated add returns false
-    assert(!db.add(key.c_str(), key.size(), firstval.c_str(), firstval.size()));
-
-    // should read my write still
-    res_raw = db.get(key.c_str(), key.size(), val0, sizeof(val0));
-    assert (res_raw >= 0);
-    assert((unsigned int)res_raw == firstval.size());
-    assert(string(val0, res_raw) == firstval);
-
-    auto secondval = key + "secondval";
-    assert(db.set(key, secondval));
-
-    // should read my  second write
-    res_raw = db.get(key.c_str(), key.size(), val0, sizeof(val0));
-    assert (res_raw >= 0);
-    assert((unsigned int)res_raw == secondval.size());
-    assert(string(val0, res_raw) == secondval);
-
-    // delete
-    int res_del = db.remove(key.c_str(), key.size());
-    assert(res_del);
-  }
-}
-
-static void procsanity(int thnum, int rnum) {
-  kc::CacheDB db;
-  uint32_t omode = kc::CacheDB::OWRITER | kc::CacheDB::OCREATE;
-  assert(db.open("*", omode));
-
-  class ThreadSanity : public kc::Thread {
-  public:
-    void setparams(kc::CacheDB *db, int id, int rnum){
-      db_ = db;
-      thid_ = id; 
-      rnum_ = rnum;
-    }
-    
-    void run() {
-      assert(db_ && rnum_);
-      sanity(*db_, thid_, rnum_);
-    }
-
-  private:
-    kc::CacheDB* db_ = nullptr;
-    int thid_ = 0;
-    int rnum_ = 0;
-  };
-
-  ThreadSanity threads[THREADMAX];
-
-  for (int32_t i = 0; i < thnum; i++) {
-    threads[i].setparams(&db, i, rnum);
-  }
-
-  for (int32_t i = 0; i < thnum; i++) {
-    threads[i].start();
-  }
-
-  for (int32_t i = 0; i < thnum; i++) {
-    threads[i].join();
-  }
-
-  assert(db.close());
-}
-
 // perform tran command
 static int32_t proctran(int64_t rnum, int32_t thnum, int32_t itnum,
                         int32_t opts, int64_t bnum, int64_t capcnt, int64_t capsiz, bool lv) {
@@ -2757,7 +2668,93 @@ static int32_t proctran(int64_t rnum, int32_t thnum, int32_t itnum,
   return err ? 1 : 0;
 }
 
+static void sanity(kc::CacheDB& db, int id, int rnum) {
 
+  using namespace std;
+
+  static const size_t maxsz = 1000;
+  string key(to_string(id) + "keynumber" + to_string(id));
+
+  for (int i = 0; i < rnum; ++i){
+    char val0[maxsz];
+
+    //should get nothing
+    assert(db.get(key.c_str(), key.size(), val0, sizeof(val0)) == -1);
+
+    //add should succeed
+    auto firstval = key + "firstval";
+    assert(db.add(key.c_str(), key.size(), firstval.c_str(), firstval.size()));
+    // should read my write
+    int res_raw = db.get(key.c_str(), key.size(), val0, sizeof(val0));
+    assert (res_raw >= 0);
+    assert((unsigned int)res_raw == firstval.size());
+    //cout << string(val0) << " " << firstval << endl;
+    assert(string(val0, res_raw) == firstval);
+
+    // repeated add returns false
+    assert(!db.add(key.c_str(), key.size(), firstval.c_str(), firstval.size()));
+
+    // should read my write still
+    res_raw = db.get(key.c_str(), key.size(), val0, sizeof(val0));
+    assert (res_raw >= 0);
+    assert((unsigned int)res_raw == firstval.size());
+    assert(string(val0, res_raw) == firstval);
+
+    auto secondval = key + "secondval";
+    assert(db.set(key, secondval));
+
+    // should read my  second write
+    res_raw = db.get(key.c_str(), key.size(), val0, sizeof(val0));
+    assert (res_raw >= 0);
+    assert((unsigned int)res_raw == secondval.size());
+    assert(string(val0, res_raw) == secondval);
+
+    // delete
+    int res_del = db.remove(key.c_str(), key.size());
+    assert(res_del);
+  }
+}
+
+static void procsanity(int thnum, int rnum) {
+  kc::CacheDB db;
+  uint32_t omode = kc::CacheDB::OWRITER | kc::CacheDB::OCREATE;
+  assert(db.open("*", omode));
+
+  class ThreadSanity : public kc::Thread {
+  public:
+    void setparams(kc::CacheDB *db, int id, int rnum){
+      db_ = db;
+      thid_ = id;
+      rnum_ = rnum;
+    }
+
+    void run() {
+      assert(db_ && rnum_);
+      sanity(*db_, thid_, rnum_);
+    }
+
+  private:
+    kc::CacheDB* db_ = nullptr;
+    int thid_ = 0;
+    int rnum_ = 0;
+  };
+
+  ThreadSanity threads[THREADMAX];
+
+  for (int32_t i = 0; i < thnum; i++) {
+    threads[i].setparams(&db, i, rnum);
+  }
+
+  for (int32_t i = 0; i < thnum; i++) {
+    threads[i].start();
+  }
+
+  for (int32_t i = 0; i < thnum; i++) {
+    threads[i].join();
+  }
+
+  assert(db.close());
+}
 
 
 
