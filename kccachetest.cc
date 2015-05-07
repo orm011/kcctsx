@@ -70,6 +70,347 @@ static int32_t proctran(int64_t rnum, int32_t thnum, int32_t itnum,
 
 static void procsanity(int, int);
 
+int staticrands[THREADMAX] = {
+    0b011011100001111001010111110001,
+    0b010000000111110111011001100111,
+    0b110111001101101111110110101001,
+    0b111011011010000111000100011001,
+    0b100111100000001011100001110010,
+    0b001011100000001001110111110101,
+    0b110111000000001001000100001010,
+    0b100000011010110101100101110100,
+    0b110011001000010110001110100000,
+    0b001010001010100110110110101000,
+    0b011100111000110000000100111001,
+    0b001000011011010000110100000000,
+    0b110110110101100001100100111110,
+    0b001010011011110100011011110101,
+    0b010110111000010111010111100001,
+    0b110100101110001100100010100011
+};
+
+#define OUTPUT(metric)\
+  std::cout << #metric << ":"  << metric << std::endl;
+
+struct OutputMetrics {
+    size_t initial_count {};
+    size_t final_count {};
+    size_t initial_size {};
+    size_t final_size {};
+    double time {};
+    long reads {};
+    long writes {};
+
+    long opcount() {
+      return reads + writes;
+    }
+
+    void merge (const OutputMetrics &other) {
+      reads += other.reads;
+      writes += other.writes;
+    }
+
+    void print() {
+      long ops = opcount();
+      long pcntreads = ((float)reads/ops) * 100;
+      size_t initial_sizemb = initial_size >> 20;
+      size_t final_sizemb = final_size >> 20;
+
+      OUTPUT(initial_count);
+      OUTPUT(final_count);
+      OUTPUT(initial_size);
+      OUTPUT(initial_sizemb);
+      OUTPUT(final_size);
+      OUTPUT(final_sizemb);
+      OUTPUT(reads);
+      OUTPUT(writes);
+      printf("time:%.3f\n", time); // formatting
+      OUTPUT(ops);
+      OUTPUT(pcntreads);
+    }
+};
+
+struct BenchParams {
+public:
+  int targetcnt() const {
+    return targetcnt_;
+  }
+
+  size_t keysize() const {
+    return kvsize_/2;
+  }
+
+  size_t valsize() const {
+    return kvsize_/2;
+  }
+
+  int duration() const {
+    return duration_;
+  }
+
+  int thnum() const {
+    return thnum_;
+  }
+
+  bool rtt() const {
+    return false;
+  }
+
+  int keyrange() const {
+    return targetcnt() * 2; // 50 percent chance of hitting a non-existing element
+  }
+
+  int readpercent() const {
+    return readpercent_;
+  }
+
+  BenchParams() = default;
+  BenchParams(size_t targetcnt, int thnum, size_t kvsize, int readpercent, int durations)
+  : targetcnt_(targetcnt), thnum_(thnum), kvsize_(kvsize), readpercent_(readpercent), duration_(durations) {}
+
+  void print() {
+    OUTPUT(targetcnt_);
+    OUTPUT(thnum_);
+    OUTPUT(kvsize_);
+    OUTPUT(readpercent_);
+    OUTPUT(duration_);
+  }
+private:
+  size_t targetcnt_ = 0;
+  int thnum_ = 0;
+  size_t kvsize_ = 0; // keypair size target --> kvsize * cpcnt should be <= capsize
+  int rnum_ = 0; // iterations
+  int readpercent_ = 0; // between 0 and 100
+  int duration_ = 0; // in seconds
+};
+
+
+void set_key(char *keybuf, int range, int * seed) {
+  sprintf(keybuf, "%d", myrandmarsaglia(range, seed));
+  // make first few bytes be different by using the ascii rep instead of first few bits.
+}
+
+
+static void loadbench(kc::CacheDB* db, struct BenchParams params, int seed) {
+  using namespace std;
+
+  char *keybuf = new char[params.keysize()];
+  assert(params.keysize() >= 32);
+  // Want max 2GB -> 100 bytes ->  max keys is 20 *(2**20) ~ 20 million, then use up to 40 million.
+  // load keys.
+  int share = params.targetcnt() / loaderThreads;
+  int range = params.keyrange();
+
+  assert(params.keysize() == params.valsize());
+  for (int i = 0; i < share;) {
+    set_key(keybuf, range, &seed);
+    int ret = db->add(keybuf, params.keysize(), keybuf, params.valsize());
+    if (ret) {
+      //assert(db->error().code() == kc::BasicDB::Error::SUCCESS);
+      ++i;
+    } else if (db->error().code() == kc::BasicDB::Error::DUPREC){
+      // try again
+    } else {
+      printf("%s\n", kc::BasicDB::Error::codename(db->error().code()));
+      assert(false);
+    }
+  }
+}
+
+static void runbench(kc::CacheDB* db, struct BenchParams params, int seed, std::atomic<int> * fl, OutputMetrics * out)
+{
+    using Error = kc::BasicDB::Error ;
+
+    using namespace std;
+
+    char * keybuf = new char[params.keysize()];
+    char * valbuf = new char[params.valsize()];
+
+    memset(keybuf, 'k', params.keysize()); // init the buffer once.
+
+    int iters = 0;
+    const int period = 50;
+
+    while (iters % period != 0 || fl->load() != 1) { // check flag every period
+      ++iters;
+      set_key(keybuf, params.keyrange(), &seed);
+
+      auto r = db->get(keybuf, params.keysize(), valbuf, params.valsize());
+      out->reads++;
+
+      if (r < 0 && db->error() != Error::NOREC) {
+          abort();
+      }
+    }
+
+    assert(fl->load() == 1);
+    assert(params.keysize() >= 32);
+    // Want max 2GB -> 100 bytes ->  max keys is 20 *(2**20) ~ 20 million, then use up to 40 million
+}
+
+
+static void procbench(BenchParams params) {
+
+  using namespace std;
+
+  kc::CacheDB db;
+  uint32_t omode = kc::CacheDB::OWRITER | kc::CacheDB::OCREATE;
+  assert(db.open("*", omode));
+
+  class ThreadLoader : public kc::Thread {
+  public:
+    void setparams(kc::CacheDB *db, BenchParams params, int seed) {
+      db_ = db;
+      params_ = params;
+      seed_ = seed;
+    }
+
+    void run()  {
+      assert(db_);
+      loadbench(db_, params_, seed_);
+    }
+
+  private:
+    kc::CacheDB* db_ = nullptr;
+    struct BenchParams params_;
+    int seed_;
+  };
+
+  ThreadLoader lthreads[THREADMAX];
+
+  for (int32_t i = 0; i < loaderThreads; i++) {
+    lthreads[i].setparams(&db, params, i);
+  }
+
+  for (int32_t i = 0; i < loaderThreads; i++) {
+    lthreads[i].start();
+  }
+
+  for (int32_t i = 0; i < loaderThreads; i++) {
+    lthreads[i].join();
+  }
+
+  class ThreadBench : public kc::Thread {
+  public:
+    void setparams(kc::CacheDB *db, BenchParams params, int seed) {
+      db_ = db;
+      params_ = params;
+      seed_ = seed;
+    }
+
+    void run() {
+      assert(db_);
+      runbench(db_, params_, seed_, &flag_, &output_);
+    }
+
+    void setFlag() { // to communicate end of time period.
+      flag_ = 1;
+    }
+
+    OutputMetrics get_output(){ // only call after join
+      return output_;
+    }
+
+  private:
+    kc::CacheDB* db_ = nullptr;
+    struct BenchParams params_;
+    int seed_;
+    atomic<int> flag_ {0}; // used to signal end
+    OutputMetrics output_ {};
+  };
+
+  ThreadBench threads[THREADMAX];
+  int bench_seed = 0b001001010000110101101101110001; // to make benchtime seed different from load time
+
+  OutputMetrics output;
+  output.initial_count = db.count();
+  output.initial_size = db.size();
+
+  for (int32_t i = 0; i < params.thnum(); i++) {
+    threads[i].setparams(&db, params, bench_seed ^ staticrands[i]);
+  }
+
+  double start = kc::time();
+  for (int32_t i = 0; i < params.thnum(); i++) {
+    threads[i].start();
+  }
+
+  unsigned int sleept = params.duration();
+  assert(sleept > 0);
+  while (sleept > 0) {
+    sleept = sleep(sleept);
+  }
+
+  for (int32_t i = 0; i < params.thnum(); i++) {
+    threads[i].setFlag();
+  }
+
+
+  for (int32_t i = 0; i < params.thnum(); i++) {
+    threads[i].join();
+  }
+
+  double end = kc::time(); // call time before anything else
+  output.final_size = db.size();  //size() and count() must be called before close.
+  output.final_count = db.count();
+  output.time = end - start; // also
+
+  assert(db.close());
+  for (int32_t i = 0; i < params.thnum(); i++) {
+    output.merge(threads[i].get_output());
+  }
+
+  double throughput  = ((double)output.opcount()/output.time);
+
+  // report
+  params.print();
+  output.print();
+  printf("throughput:%.3f\n", throughput);
+  //OUTPUT(throughput);
+  cout.flush();
+}
+
+
+
+// parse arguments of order command
+BenchParams parsebench(int argc, char** argv) {
+  struct BenchParams ans;
+
+  //defaults
+  int thnum = 1;
+  int targetcnt = 100000;
+  size_t kvsize = 100;
+  // => expected default size 2 * 100 * 1million = 20 MB
+  int readpcnt = 90;
+  int durations = 5;
+
+  for (int32_t i = 2; i < argc; i++) {
+    if (argv[i][0] == '-') {
+      if (!std::strcmp(argv[i], "-th")) {
+        if (++i >= argc) usage();
+        thnum = kc::atoix(argv[i]);
+      } else if (!std::strcmp(argv[i], "-targetcnt")) { //capcnt, capsize must be set relative to targetcnt and kvsize
+        if (++i >= argc) usage();
+        targetcnt= kc::atoix(argv[i]);
+      } else if (!std::strcmp(argv[i], "-kvsize")) {
+        if (++i >= argc) usage();
+        kvsize = kc::atoix(argv[i]);
+      } else if (!std::strcmp(argv[i], "-readpcnt")) { // 0 to 100
+        if (++i >= argc) usage();
+        readpcnt = kc::atoix(argv[i]);
+      } else if (!std::strcmp(argv[i], "-durations")) { //seconds
+        if (++i >= argc) usage();
+        durations = kc::atoix(argv[i]);
+      }
+    } else {
+        printf("arg parse error\n");
+        exit(1);
+    }
+  }
+
+  return BenchParams(targetcnt, thnum, kvsize, readpcnt, durations);
+}
+
 
 // main routine
 int main(int argc, char** argv) {
@@ -92,6 +433,9 @@ int main(int argc, char** argv) {
   } else if (!std::strcmp(argv[1], "sanity")){
     assert(argc == 4);
     procsanity(atoi(argv[2]), atoi(argv[3]));
+  } else if (!std::strcmp(argv[1], "bench")){
+    BenchParams p = parsebench(argc, argv);
+    procbench(p);
   } else {
     usage();
   }
