@@ -250,8 +250,8 @@ static void runbench(kc::CacheDB* db, struct BenchParams params, int seed, std::
 
     char * keybuf = new char[params.keysize()];
     char * valbuf = new char[params.valsize()];
-    memset(valbuf, 'v', params.valsize());
-    memset(keybuf, 'k', params.keysize()); // init the buffer once.
+    memset(valbuf, '\0', params.valsize());
+    memset(keybuf, '\0', params.keysize()); // init the buffer once.
 
     int iters = 0;
     const int period = 50;
@@ -260,6 +260,7 @@ static void runbench(kc::CacheDB* db, struct BenchParams params, int seed, std::
 
       ++iters;
       set_key(keybuf, params.keyrange(), &seed);
+      //printf("%s\n", keybuf);
 
       if (myrandmarsaglia(100, &seed) <= params.readpercent()) { // do a read depending on readpercent
         auto r = db->get(keybuf, params.keysize(), valbuf, params.valsize());
