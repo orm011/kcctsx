@@ -57,14 +57,15 @@ CXXFLAGS = @MYCXXFLAGS@
 LDFLAGS = @MYLDFLAGS@
 
 ifeq ($(METHOD),locks)
-	CPPFLAGS+=-D__transaction_atomic="" -DLOCKING
+	CPPFLAGS+=-D__transaction_atomic="" -DLOCKING -DLOADERS=1 #faster to load with one thread for locks
 else
 ifeq ($(METHOD),tm)
+	CPPFLAGS+=-DLOADERS=5 #load concurrently
 	CXXFLAGS+=-fgnu-tm
 	LDFLAGS+=-litm
 else
 ifeq ($(METHOD),none)
-	CPPFLAGS+=-D__transaction_atomic=""
+	CPPFLAGS+=-D__transaction_atomic="" -DLOADERS=1 #must load single threaded as well.
 else
 	CPPFLAGS+="-fFAIL"
 endif

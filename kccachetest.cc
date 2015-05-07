@@ -43,8 +43,7 @@ int MarsagliaXOR(int *p_seed) {
     return seed & 0x7FFFFFFF;
 }
 
-static const int loaderThreads = 8;
-
+static const int loaderThreads = LOADERS;
 
 int myrandmarsaglia(int range, int * seedp) {
   return MarsagliaXOR(seedp) % range;
