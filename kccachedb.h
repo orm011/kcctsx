@@ -50,7 +50,7 @@ class CacheDB : public BasicDB {
  public:
   class Cursor;
   class CursorListSafe;
-  static const int32_t SLOTNUM = 256;
+  static const int32_t SLOTNUM = 257; //make it a prime.
  private:
 
   struct Record;
