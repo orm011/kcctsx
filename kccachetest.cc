@@ -420,6 +420,7 @@ static void procbench(BenchParams params) {
   printf("throughput:%.3f\n", throughput);
   //OUTPUT(throughput);
   cout.flush();
+  pthread_exit(0);
 }
 
 
