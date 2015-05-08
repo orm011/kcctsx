@@ -425,7 +425,8 @@ static void procbench(BenchParams params) {
   printf("throughput:%.3f\n", throughput);
   OUTPUT(bnum_total);
   OUTPUT(bnum_used);
-  int bnum_occupancy = ((double)bnum_used/bnum_total);
+  float bnum_occupancy = ((double)bnum_used/bnum_total);
+  printf("bnum_occupancy:%.3f\n", bnum_occupancy);
   OUTPUT(bnum_occupancy);
   float load_ratio = ((double)output.final_count/bnum_used);
   printf("load_ratio:%.3f\n", load_ratio);
