@@ -28,12 +28,15 @@ for algo in $ALGOS; do
     
 
     for thds in $(seq $THREADS); do 
-    	for rep in $(seq $REPS); do
-	    (taskset -c 0-7 \
-		./tmenv \
-		ocperf.py stat -x:: -e tx_mem.abort_capacity_write -e tx_mem.abort_conflict "-e tx_exec.misc"{1,2,3,4,5} -e rtm_retired.start -e rtm_retired.commit -e rtm_retired.aborted:pp "-e rtm_retired.aborted_misc"{1,2,3,4,5} \
-		./kccachetest bench -th $thds -targetcnt 1000000 -readpcnt 90 -durations 2 2>&1;
-		echo 'algo:' $algo) >> $OUT
-	done
-    done 
+	MAXCPUID=7
+	if [ $thds -gt 8 ]; then
+	    MAXCPUID=15
+	fi
+	(ITM_DEFAULT_METHOD=$ITM_DEFAULT_METHOD taskset -c 0-$MAXCPUID \
+	    ./tmenv \
+	    ocperf.py stat -x:: -e tx_mem.abort_capacity_write -e tx_mem.abort_conflict "-e tx_exec.misc"{1,2,3,4,5} -e rtm_retired.start -e rtm_retired.commit -e rtm_retired.aborted:pp "-e rtm_retired.aborted_misc"{1,2,3,4,5} \
+	    ./kccachetest bench -th $thds -targetcnt 20000 -kvsize 100 -readpcnt 90 -durations 1 2>&1;
+	    echo 'algo:' $algo) >> $OUT
+    done
+done 
 done
