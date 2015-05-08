@@ -303,7 +303,8 @@ static void procbench(BenchParams params) {
   kc::CacheDB db;
   db.switch_rotation(params.rtt());
   uint32_t omode = kc::CacheDB::OWRITER | kc::CacheDB::OCREATE;
-  assert(db.open("*", omode));
+  int ropen = db.open("*", omode);
+  myassert(ropen);
 
   class ThreadLoader : public kc::Thread {
   public:
@@ -2722,6 +2723,7 @@ static int32_t proctran(int64_t rnum, int32_t thnum, int32_t itnum,
   return err ? 1 : 0;
 }
 
+#ifndef NDEBUG
 static void sanity(kc::CacheDB& db, int id, int rnum) {
 
   using namespace std;
@@ -2768,8 +2770,10 @@ static void sanity(kc::CacheDB& db, int id, int rnum) {
     assert(res_del);
   }
 }
+#endif
 
 static void procsanity(int thnum, int rnum) {
+#ifndef NDEBUG
   kc::CacheDB db;
   uint32_t omode = kc::CacheDB::OWRITER | kc::CacheDB::OCREATE;
   assert(db.open("*", omode));
@@ -2808,6 +2812,7 @@ static void procsanity(int thnum, int rnum) {
   }
 
   assert(db.close());
+#endif
 }
 
 
