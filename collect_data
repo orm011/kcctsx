@@ -8,7 +8,7 @@ ALGOS="rh_htm_gl_wt none locks"
 REPS=3
 #RNUM=10000000 #will get x 10 in database. with 3Mx10ops, expect lowest time be ~900ms longest 15s.
 
-rm -f $OUT
+ITM_DEFAULT_METHOD=htm
 
 for algo in $ALGOS; do
 
