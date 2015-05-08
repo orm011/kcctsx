@@ -10,6 +10,7 @@ REPS=3
 
 ITM_DEFAULT_METHOD=htm
 
+for rep in $(seq $REPS); do
 for algo in $ALGOS; do
 
     if [[ $algo == locks ]]; then
