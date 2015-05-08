@@ -3,8 +3,8 @@
 export ITM_HTM_RESTARTS=1 
 
 #| sed 's/^\(.*\)::\(.*\)/\2:\1/g
-OUT="results.cat"
-ALGOS="htm rh_htm_gl_wt none locks"
+OUT="results_$(date +"%T" | sed 's/:/_/g')"
+ALGOS="rh_htm_gl_wt none locks"
 REPS=3
 RNUM=10000000 #will get x 10 in database. with 3Mx10ops, expect lowest time be ~900ms longest 15s.
 
