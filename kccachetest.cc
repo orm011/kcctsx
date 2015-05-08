@@ -408,7 +408,11 @@ static void procbench(BenchParams params) {
   output.final_count = db.count();
   output.actual_time = end - start; // also
 
-  assert(db.close());
+  uint64_t bnum_used = db.bnum_used();
+  uint64_t bnum_total = db.bnum_total();
+
+  int rclose = db.close();
+  myassert(rclose);
   for (int32_t i = 0; i < params.thnum(); i++) {
     output.merge(threads[i].get_output());
   }
@@ -419,7 +423,12 @@ static void procbench(BenchParams params) {
   params.print();
   output.print();
   printf("throughput:%.3f\n", throughput);
-  //OUTPUT(throughput);
+  OUTPUT(bnum_total);
+  OUTPUT(bnum_used);
+  int bnum_occupancy = ((double)bnum_used/bnum_total);
+  OUTPUT(bnum_occupancy);
+  float load_ratio = ((double)output.final_count/bnum_used);
+  printf("load_ratio:%.3f\n", load_ratio);
   cout.flush();
   pthread_exit(0);
 }

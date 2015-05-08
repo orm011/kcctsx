@@ -1234,6 +1234,24 @@ class CacheDB : public BasicDB {
     (*strmap)["size"] = strprintf("%lld", (long long)size_impl());
     return true;
   }
+
+  int64_t bnum_used() const { // not safe
+    int64_t cnt = 0;
+    for (int32_t i = 0; i < SLOTNUM; i++) {
+      const Slot* slot = slots_ + i;
+      Record** buckets = slot->buckets;
+      size_t bnum = slot->bnum;
+      for (size_t j = 0; j < bnum; j++) {
+        if (buckets[j]) cnt++;
+      }
+    }
+    return cnt;
+  }
+
+  int64_t bnum_total() const { // not safe
+    return slots_[0].bnum * SLOTNUM;
+  }
+
   /**
    * Create a cursor object.
    * @return the return value is the created cursor object.
