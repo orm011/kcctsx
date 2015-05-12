@@ -102,7 +102,7 @@ struct OutputMetrics {
     long add_attempts {};
     long add_success {};
     long remove_attempts {};
-    long remove_success;
+    long remove_success {};
 
     long opcount() {
       return read_attempts + add_attempts  + remove_attempts;
