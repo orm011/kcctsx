@@ -192,7 +192,7 @@ public:
     OUTPUT(duration_);
     OUTPUT(rtt_);
   }
-private:
+
   size_t targetcnt_ = 0;
   int thnum_ = 0;
   size_t kvsize_ = 0; // keypair size target --> kvsize * cpcnt should be <= capsize
@@ -271,7 +271,7 @@ static void runbench(kc::CacheDB* db, struct BenchParams params, int seed, std::
           abort();
         }
       } else if (myrandmarsaglia(2, &seed) == 1) { // do an insert or delete otherwise
-        auto r = db->add(keybuf, params.keysize(), valbuf, params.valsize());
+        auto r = db->set(keybuf, params.keysize(), valbuf, params.valsize());
         out->add_attempts++;
         out->add_success += (!!r);
         if (!r && db->error() != Error::DUPREC) {
@@ -372,6 +372,12 @@ static void procbench(BenchParams params) {
     OutputMetrics output_ {};
   };
 
+  const int maxth = params.thnum();
+
+  for (int thnum = 1; thnum <= maxth; ++thnum) {
+  BenchParams thisroundparams = params;
+  thisroundparams.thnum_ = thnum;
+
   ThreadBench threads[THREADMAX];
   int bench_seed = 0b001001010000110101101101110001; // to make benchtime seed different from load time
 
@@ -379,27 +385,26 @@ static void procbench(BenchParams params) {
   output.initial_count = db.count();
   output.initial_size = db.size();
 
-  for (int32_t i = 0; i < params.thnum(); i++) {
-    threads[i].setparams(&db, params, bench_seed ^ staticrands[i]);
+  for (int32_t i = 0; i < thnum; i++) {
+    threads[i].setparams(&db, thisroundparams, bench_seed ^ staticrands[i]);
   }
 
   double start = kc::time();
-  for (int32_t i = 0; i < params.thnum(); i++) {
+  for (int32_t i = 0; i < thnum; i++) {
     threads[i].start();
   }
 
-  unsigned int sleept = params.duration();
+  unsigned int sleept = thisroundparams.duration();
   assert(sleept > 0);
   while (sleept > 0) {
     sleept = sleep(sleept);
   }
 
-  for (int32_t i = 0; i < params.thnum(); i++) {
+  for (int32_t i = 0; i < thnum; i++) {
     threads[i].setFlag();
   }
 
-
-  for (int32_t i = 0; i < params.thnum(); i++) {
+  for (int32_t i = 0; i < thnum; i++) {
     threads[i].join();
   }
 
@@ -411,16 +416,17 @@ static void procbench(BenchParams params) {
   uint64_t bnum_used = db.bnum_used();
   uint64_t bnum_total = db.bnum_total();
 
-  int rclose = db.close();
-  myassert(rclose);
-  for (int32_t i = 0; i < params.thnum(); i++) {
+  //int rclose = db.close();
+  //myassert(rclose);
+
+  for (int32_t i = 0; i < thnum; i++) {
     output.merge(threads[i].get_output());
   }
 
   double throughput  = ((double)output.opcount()/output.actual_time);
 
   // report
-  params.print();
+  thisroundparams.print();
   output.print();
   printf("throughput:%.3f\n", throughput);
   OUTPUT(bnum_total);
@@ -431,7 +437,9 @@ static void procbench(BenchParams params) {
   float load_ratio = ((double)output.final_count/bnum_used);
   printf("load_ratio:%.3f\n", load_ratio);
   cout.flush();
-  pthread_exit(0);
+
+  }
+  //pthread_exit(0);
 }
 
 

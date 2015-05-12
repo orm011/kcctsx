@@ -2086,7 +2086,7 @@ class CacheDB : public BasicDB {
   int64_t count_impl() {
     _assert_(true);
     int64_t sum = 0;
-    __transaction_atomic {
+    //__transaction_atomic { //disable thread safety for now.
       myassert(this->omode_);
     for (int32_t i = 0; i < SLOTNUM; i++) {
       Slot* slot = slots_ + i;
@@ -2094,7 +2094,7 @@ class CacheDB : public BasicDB {
       ScopedMutex lock(&slot->lock);
 #endif
       sum += slot->count;
-    }
+    //}
     }
     return sum;
   }
@@ -2105,7 +2105,7 @@ class CacheDB : public BasicDB {
   int64_t size_impl() {
     _assert_(true);
     int64_t sum = sizeof(*this);
-    __transaction_atomic {
+    //__transaction_atomic {
       myassert(this->omode_);
     for (int32_t i = 0; i < SLOTNUM; i++) {
       Slot* slot = slots_ + i;
@@ -2115,7 +2115,7 @@ class CacheDB : public BasicDB {
       sum += slot->bnum * sizeof(Record*);
       sum += slot->size;
     }
-    }
+//    }
     return sum;
   }
   /**
