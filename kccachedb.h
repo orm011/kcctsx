@@ -1117,7 +1117,7 @@ class CacheDB : public BasicDB {
     for (int32_t i = 0; i < SLOTNUM; i++) {
       if (!commit) apply_slot_trlogs(slots_ + i);
       slots_[i].trlogs.clear();
-      //adjust_slot_capacity(slots_ + i);
+      adjust_slot_capacity(slots_ + i);
     }
     tran_ = false;
     trigger_meta(commit ? MetaTrigger::COMMITTRAN : MetaTrigger::ABORTTRAN, "end_transaction");
@@ -2029,7 +2029,7 @@ class CacheDB : public BasicDB {
               slot->last = rec;
               slot->repcheck();
             }
-//            if (adj) adjust_slot_capacity(slot);
+            if (adj) adjust_slot_capacity(slot);
           }
           slot->repcheck();
           return;
@@ -2073,7 +2073,7 @@ class CacheDB : public BasicDB {
       if (slot->last) slot->last->next = rec;
       slot->last = rec;
       slot->count++;
-//      if (!tran_) adjust_slot_capacity(slot);
+      if (!tran_) adjust_slot_capacity(slot);
       slot->repcheck();
       delete[] zbuf;
     }
@@ -2224,6 +2224,9 @@ class CacheDB : public BasicDB {
   void adjust_slot_capacity(Slot* slot) {
     _assert_(slot);
     if ((slot->count > slot->capcnt || slot->size > slot->capsiz) && slot->first) {
+      myassert(false);
+        // make sure we are not trying to evict anything (this  also makes sure slots are not growing
+        // in the worst case.
       Record* rec = slot->first;
       uint32_t rksiz = rec->ksiz & KSIZMAX;
       char* dbuf = (char*)rec + sizeof(*rec);
