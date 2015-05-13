@@ -21,6 +21,9 @@
 #include <stdlib.h>
 #include <iostream>
 
+static const char * method = METHOD;
+static const char * algo = nullptr;
+
 // global variables
 const char* g_progname;                  // program name
 uint32_t g_randseed;                     // random seed
@@ -433,11 +436,10 @@ static void procbench(BenchParams params) {
   OUTPUT(bnum_used);
   float bnum_occupancy = ((double)bnum_used/bnum_total);
   printf("bnum_occupancy:%.3f\n", bnum_occupancy);
-  OUTPUT(bnum_occupancy);
   float load_ratio = ((double)output.final_count/bnum_used);
   printf("load_ratio:%.3f\n", load_ratio);
+  printf("algo:%s", algo);
   cout.flush();
-
   }
   //pthread_exit(0);
 }
@@ -475,18 +477,29 @@ BenchParams parsebench(int argc, char** argv) {
         durations = kc::atoix(argv[i]);
       } else if (!std::strcmp(argv[i], "-rtt")) { //rtt flag
         rtt = true;
+      } else if (!std::strcmp(argv[i], "-rep")) { //reps
+        if (++i >= argc) usage();
+        reps = kc::atoix(argv[i]);
       } else {
         printf("arg parse error\n");
         exit(1);
     }
   }}
 
-  return BenchParams(targetcnt, thnum, kvsize, readpcnt, durations, rtt);
+  return BenchParams(targetcnt, thnum, kvsize, readpcnt, durations, rtt, reps);
 }
 
 
 // main routine
 int main(int argc, char** argv) {
+  algo = getenv("ITM_DEFAULT_METHOD");
+  if (method == std::string("tm") && !algo){
+    algo = "unknown";
+  } else if (method != std::string("tm")){
+    algo = method;
+  }
+  assert(algo); // at this point it must be set to something;
+  printf("algo is %s\n", algo);
   g_progname = argv[0];
   const char* ebuf = kc::getenv("KCRNDSEED");
   g_randseed = ebuf ? (uint32_t)kc::atoi(ebuf) : (uint32_t)(kc::time() * 1000);
