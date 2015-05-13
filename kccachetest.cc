@@ -20,6 +20,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <iostream>
+ #include <pthread.h>
+#include <sched.h>
 
 static const char * method = METHOD;
 static const char * algo = nullptr;
@@ -353,15 +355,43 @@ static void procbench(BenchParams params) {
 
   class ThreadBench : public kc::Thread {
   public:
-    void setparams(kc::CacheDB *db, BenchParams params, int seed) {
+    void setparams(kc::CacheDB *db, BenchParams params, int seed, int no) {
       db_ = db;
       params_ = params;
       seed_ = seed;
+      no_ = no;
     }
 
     void run() {
+
+      cpu_set_t cpuset;
+      pthread_t thread = pthread_self();
+
+      CPU_ZERO(&cpuset);
+
+      {
+        int start = 0;
+        int end = 0;
+        if (no_ <= 7){
+          start = 0;
+          end = 8;
+        } else {
+          start = 8;
+          end = 16;
+        }
+
+        for (int j = start; j < end; j++) CPU_SET(j, &cpuset);
+      }
+
+      int s = pthread_setaffinity_np(thread, sizeof(cpu_set_t), &cpuset);
+
+      if (s != 0){
+        abort();
+      }
+
       assert(db_);
       runbench(db_, params_, seed_, &flag_, &output_);
+
     }
 
     void setFlag() { // to communicate end of time period.
@@ -378,6 +408,7 @@ static void procbench(BenchParams params) {
     int seed_;
     atomic<int> flag_ {0}; // used to signal end
     OutputMetrics output_ {};
+    int no_ {};
   };
 
   const int maxth = params.thnum();
@@ -395,7 +426,7 @@ static void procbench(BenchParams params) {
   output.initial_size = db.size();
 
   for (int32_t i = 0; i < thnum; i++) {
-    threads[i].setparams(&db, thisroundparams, bench_seed ^ staticrands[i]);
+    threads[i].setparams(&db, thisroundparams, bench_seed ^ staticrands[i], i);
   }
 
   double start = kc::time();
