@@ -475,7 +475,7 @@ static void procbench(BenchParams params) {
   printf("bnum_occupancy:%.3f\n", bnum_occupancy);
   float load_ratio = ((double)output.final_count/bnum_used);
   printf("load_ratio:%.3f\n", load_ratio);
-  printf("algo:%s", algo);
+  printf("algo:%s\n", algo);
   cout.flush();
   }
   //pthread_exit(0);
