@@ -183,9 +183,13 @@ public:
     return readpercent_;
   }
 
+  int reps() const {
+    return reps_;
+  }
+
   BenchParams() = default;
-  BenchParams(size_t targetcnt, int thnum, size_t kvsize, int readpercent, int durations, bool rtt)
-  : targetcnt_(targetcnt), thnum_(thnum), kvsize_(kvsize), readpercent_(readpercent), duration_(durations), rtt_(rtt) {}
+  BenchParams(size_t targetcnt, int thnum, size_t kvsize, int readpercent, int durations, bool rtt, int reps)
+  : targetcnt_(targetcnt), thnum_(thnum), kvsize_(kvsize), readpercent_(readpercent), duration_(durations), rtt_(rtt), reps_(reps) {}
 
   void print() {
     OUTPUT(targetcnt_);
@@ -203,6 +207,7 @@ public:
   int readpercent_ = 0; // between 0 and 100
   int duration_ = 0; // in seconds
   bool rtt_ = false;
+  int reps_ = 1;
 };
 
 
@@ -377,6 +382,7 @@ static void procbench(BenchParams params) {
 
   const int maxth = params.thnum();
 
+  for (int r = 0; r < params.reps(); ++r){
   for (int thnum = 1; thnum <= maxth; ++thnum) {
   BenchParams thisroundparams = params;
   thisroundparams.thnum_ = thnum;
@@ -443,6 +449,7 @@ static void procbench(BenchParams params) {
   }
   //pthread_exit(0);
 }
+}
 
 
 
@@ -457,6 +464,7 @@ BenchParams parsebench(int argc, char** argv) {
   // => expected default size 2 * 100 * 1million = 20 MB
   int readpcnt = 90;
   int durations = 5;
+  int reps = 1;
   bool rtt = false;
   for (int32_t i = 2; i < argc; i++) {
     if (argv[i][0] == '-') {
