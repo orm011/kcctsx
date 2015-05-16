@@ -13,8 +13,12 @@
  *************************************************************************************************/
 
 
+#include "atomics.h"
 #include "kcthread.h"
 #include "myconf.h"
+//#include "rlu-ml.h"
+
+#define MY_RWLOCK
 
 namespace kyotocabinet {                 // common namespace
 
@@ -23,10 +27,23 @@ namespace kyotocabinet {                 // common namespace
  * Constants for implementation.
  */
 namespace {
-const uint32_t LOCKBUSYLOOP = 8192;      ///< threshold of busy loop and sleep for locking
+const uint32_t LOCKBUSYLOOP = 81920000;      ///< threshold of busy loop and sleep for locking
 const size_t LOCKSEMNUM = 256;           ///< number of semaphores for locking
 }
 
+volatile long padding0[16];
+__thread int rwlock_is_writer = 0;;
+__thread int rwlock_nesting = 0;;
+
+volatile long padding1[16];
+volatile long g_rwlock_inside = 0;
+volatile long padding2[16];
+volatile long g_rwlock_outside = 0;
+volatile long padding3[16];
+volatile long g_rwlock_writer_lock = 0;
+volatile long padding4[16];
+volatile long g_rwlock_stop_readers = 0;
+volatile long padding5[16];
 
 /**
  * Thread internal.
@@ -103,7 +120,6 @@ Thread::~Thread() {
   delete core;
 #endif
 }
-
 
 /**
  * Start the thread.
@@ -188,7 +204,7 @@ void Thread::yield() {
   ::Sleep(0);
 #else
   _assert_(true);
-  ::sched_yield();
+  //::sched_yield(); //TODO: fix
 #endif
 }
 
@@ -277,14 +293,18 @@ int64_t Thread::hash() {
 static ::DWORD threadrun(::LPVOID arg) {
   _assert_(true);
   Thread* thread = (Thread*)arg;
+  RLU_THREAD_INIT();
   thread->run();
+  RLU_THREAD_FINISH();
   return NULL;
 }
 #else
 static void* threadrun(void* arg) {
   _assert_(true);
   Thread* thread = (Thread*)arg;
+  //RLU_THREAD_INIT();
   thread->run();
+  //RLU_THREAD_FINISH();
   return NULL;
 }
 #endif
@@ -970,6 +990,70 @@ RWLock::~RWLock() {
 #endif
 }
 
+void my_rwlock_lock_reader() {
+	if (rwlock_nesting > 0) {
+		rwlock_nesting++;
+		return;
+	}
+	
+retry:
+	atomic_add(&g_rwlock_inside, 1);
+	
+	if (g_rwlock_stop_readers > 0) {
+		atomic_add(&g_rwlock_outside, 1);
+		while (g_rwlock_stop_readers > 0) { CPU_RELAX; }
+		goto retry;
+	}
+	
+	rwlock_is_writer = 0;
+	rwlock_nesting++;
+	return;
+}
+
+void my_rwlock_unlock_reader() {
+	if (rwlock_nesting > 1) {
+		rwlock_nesting--;
+		return;
+	}
+	
+	rwlock_nesting--;
+	
+	atomic_add(&g_rwlock_outside, 1);
+}
+
+void my_rwlock_lock_writer() {
+	if (rwlock_nesting > 0) {
+		rwlock_nesting++;
+		return;
+	}
+	
+	atomic_add(&g_rwlock_stop_readers, 1);
+	
+	while ((g_rwlock_inside - g_rwlock_outside) > 0) { CPU_RELAX; }
+	
+retry:
+	if (CAS(&g_rwlock_writer_lock, 0 , 1) == 0) {
+		rwlock_is_writer = 1;
+		rwlock_nesting++;
+		return;
+	}
+		
+	while (g_rwlock_writer_lock != 0) { CPU_RELAX; }
+	goto retry;
+
+}
+
+void my_rwlock_unlock_writer() {
+	if (rwlock_nesting > 1) {
+		rwlock_nesting--;
+		return;
+	}
+	
+	rwlock_nesting--;
+	
+	g_rwlock_writer_lock = 0;
+	atomic_add(&g_rwlock_stop_readers, -1);	
+}
 
 /**
  * Get the writer lock.
@@ -980,9 +1064,13 @@ void RWLock::lock_writer() {
   SpinRWLock* rwlock = (SpinRWLock*)opq_;
   rwlock->lock_writer();
 #else
+#ifdef MY_RWLOCK
+  my_rwlock_lock_writer();
+#else
   _assert_(true);
   ::pthread_rwlock_t* rwlock = (::pthread_rwlock_t*)opq_;
   if (::pthread_rwlock_wrlock(rwlock) != 0) throw std::runtime_error("pthread_rwlock_lock");
+#endif
 #endif
 }
 
@@ -1015,9 +1103,13 @@ void RWLock::lock_reader() {
   SpinRWLock* rwlock = (SpinRWLock*)opq_;
   rwlock->lock_reader();
 #else
+#ifdef MY_RWLOCK
+  my_rwlock_lock_reader();
+#else
   _assert_(true);
   ::pthread_rwlock_t* rwlock = (::pthread_rwlock_t*)opq_;
   if (::pthread_rwlock_rdlock(rwlock) != 0) throw std::runtime_error("pthread_rwlock_lock");
+#endif
 #endif
 }
 
@@ -1050,9 +1142,17 @@ void RWLock::unlock() {
   SpinRWLock* rwlock = (SpinRWLock*)opq_;
   rwlock->unlock();
 #else
+#ifdef MY_RWLOCK
+  if (rwlock_is_writer) {
+    my_rwlock_unlock_writer();
+  } else {
+	my_rwlock_unlock_reader();
+  }
+#else
   _assert_(true);
   ::pthread_rwlock_t* rwlock = (::pthread_rwlock_t*)opq_;
   if (::pthread_rwlock_unlock(rwlock) != 0) throw std::runtime_error("pthread_rwlock_unlock");
+#endif
 #endif
 }
 
@@ -1450,7 +1550,7 @@ static void spinrwlocklock(SpinRWLockCore* core) {
 #elif _KC_GCCATOMIC
   _assert_(core);
   while (!__sync_bool_compare_and_swap(&core->sem, 0, 1)) {
-    ::sched_yield();
+    //::sched_yield(); // TODO: fix
   }
 #else
   _assert_(core);
@@ -1733,7 +1833,7 @@ static void slottedspinrwlocklock(SlottedSpinRWLockCore* core, size_t idx) {
 #elif _KC_GCCATOMIC
   _assert_(core);
   while (!__sync_bool_compare_and_swap(core->sems + idx, 0, 1)) {
-    ::sched_yield();
+    //::sched_yield(); TODO: fix
   }
 #else
   _assert_(core);
@@ -2028,8 +2128,7 @@ void TSDKey::set(void* ptr) {
   _assert_(true);
   ::pthread_key_t* key = (::pthread_key_t*)opq_;
   if (::pthread_setspecific(*key, ptr) != 0)
-      assert(false);
-    //throw std::runtime_error("pthread_setspecific");
+    throw std::runtime_error("pthread_setspecific");
 #endif
 }
 
@@ -2037,7 +2136,7 @@ void TSDKey::set(void* ptr) {
 /**
  * Get the value.
  */
-void* __attribute__((transaction_safe)) TSDKey::get() const {
+void* TSDKey::get() const {
 #if defined(_SYS_MSVC_) || defined(_SYS_MINGW_)
   _assert_(true);
   ::DWORD key = (::DWORD)opq_;
