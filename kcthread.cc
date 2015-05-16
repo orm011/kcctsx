@@ -2031,7 +2031,8 @@ void CondVar::signal() {
   _assert_(true);
   CondVarCore* core = (CondVarCore*)opq_;
   if (::pthread_cond_signal(&core->cond) != 0)
-    throw std::runtime_error("pthread_cond_signal");
+    abort();
+  //throw std::runtime_error("pthread_cond_signal");
 #endif
 }
 
@@ -2128,7 +2129,8 @@ void TSDKey::set(void* ptr) {
   _assert_(true);
   ::pthread_key_t* key = (::pthread_key_t*)opq_;
   if (::pthread_setspecific(*key, ptr) != 0)
-    throw std::runtime_error("pthread_setspecific");
+    abort();
+    //throw std::runtime_error("pthread_setspecific");
 #endif
 }
 

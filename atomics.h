@@ -35,10 +35,11 @@
 # define membarstoreload() __sync_synchronize()
 #endif
 
-//#define MEMBARSTLD() { \
+/*
+#define MEMBARSTLD() { \
 	unsigned long dummy = 0; \
 	LOCKED_ADD(&dummy, 0); \
-}
+	}*/
 
 #define MEMBARSTLD() membarstoreload()
   
