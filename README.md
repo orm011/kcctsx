@@ -1,4 +1,7 @@
 kyotofork
 =========
+adapting kccache db to use transactional memory instead of locks.
 
-kc
+See report of results at:
+
+https://drive.google.com/file/d/0BzsoAOzLLpgjOWtWaWZCQTFCRmNJSV9VcUdwbGRCUFZWc1dN/view?usp=sharing
