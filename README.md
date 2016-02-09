@@ -1,6 +1,6 @@
-kyotofork
+KCDache + TSX
 =========
-adapting kccache db to use transactional memory instead of locks.
+Adapting kccache db to use transactional memory instead of locks.
 
 See report of results at:
 
