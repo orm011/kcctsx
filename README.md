@@ -1,4 +1,4 @@
-KCDache + TSX
+KCCache + TSX
 =========
 Adapting kccache db to use transactional memory instead of locks.
 
